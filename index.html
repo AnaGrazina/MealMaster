@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MealMaster</title>
+  <link rel="stylesheet" href="style.css" />
+  <meta name="theme-color" content="#4caf50" />
+</head>
+<body>
+  <!-- Cabeçalho padrão -->
+  <header>
+    <h1>MealMaster</h1>
+    <div class="profile-icon" title="Perfil">👤</div>
+  </header>
+
+  <!-- MENU (rotas em minúsculas) -->
+  <nav class="sidebar" role="navigation" aria-label="Menu principal">
+    <a href="index.html"       data-route="index.html">Menu Principal</a>
+    <a href="receitas.html"    data-route="receitas.html">Receitas</a>
+    <a href="calendario.html"  data-route="calendario.html">Plano Semanal</a>
+    <a href="listaCompras.html"data-route="listaCompras.html">Lista de Compras</a>
+    <a href="configuracoes.html" data-route="configuracoes.html">Configurações</a>
+    <a href="perfil.html"      data-route="perfil.html">Perfil</a>
+  </nav>
+
+  <!-- marca o link ativo no menu -->
+  <script>
+    (function () {
+      const here = location.pathname.split('/').pop() || 'index.html';
+      document.querySelectorAll('.sidebar a').forEach(a => {
+        if (a.getAttribute('data-route') === here) {
+          a.classList.add('active');
+          a.setAttribute('aria-current', 'page');
+        }
+      });
+    })();
+  </script>
+
+  <!-- DASHBOARD -->
+  <main id="dashboard">
+    <!-- Topo: título + pesquisa -->
+    <div class="dash-top">
+      <h2>Bem-vindo(a) ao MealMaster!</h2>
+      <form id="quick-search" role="search" aria-label="Pesquisar receitas">
+        <input id="qs-input" type="search" placeholder="Procurar receita..." list="qs-sugestoes" />
+        <datalist id="qs-sugestoes"></datalist>
+        <button class="btn btn--brand" type="submit">Pesquisar</button>
+      </form>
+    </div>
+
+    <!-- Atalhos rápidos -->
+    <section class="card shortcuts" aria-label="Atalhos rápidos">
+      <a class="btn btn--big btn--brand" href="receitas.html">+ Adicionar receita</a>
+      <a class="btn btn--big" href="calendario.html">Abrir plano semanal</a>
+      <a class="btn btn--big" href="listaCompras.html">
+        Lista de compras
+        <span id="badge-compras" class="pill" aria-label="Itens por comprar"></span>
+      </a>
+    </section>
+
+    <!-- Hoje no plano -->
+    <section class="card today-plan" aria-live="polite">
+      <div class="tp-header">
+        <h3>Hoje no plano</h3>
+        <a class="link" href="calendario.html">Ver semana</a>
+      </div>
+      <div id="tp-conteudo" class="tp-grid"><!-- JS preenche --></div>
+    </section>
+
+    <!-- Receita do dia -->
+    <section class="card recipe-of-day" aria-live="polite">
+      <div class="rod-header">
+        <h3>Receita do dia</h3>
+        <button id="btn-surpreende" class="btn" type="button">Surpreende-me</button>
+      </div>
+      <div id="rod-conteudo"><!-- JS preenche --></div>
+    </section>
+
+    <!-- Recentes -->
+    <section class="card recent" aria-live="polite">
+      <h3>Recentes</h3>
+      <div id="recent-grid" class="recent-grid"><!-- JS preenche --></div>
+      <a class="link" href="receitas.html">Ver todas</a>
+    </section>
+  </main>
+
+  <!-- Estilos rápidos do dashboard (podes mover para style.css) -->
+  <style>
+    #dashboard{
+      margin:24px 40px;     /* ocupa a largura útil como nas outras páginas */
+      padding:0 0 40px;
+    }
+    .dash-top{display:flex;gap:16px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+    .dash-top h2{margin:0}
+    #quick-search{display:flex;gap:10px;align-items:center}
+    #quick-search input{padding:10px 12px;border:1.5px solid #ffb74d;border-radius:10px;font-weight:600;background:#fffde7}
+    .btn{border:0;border-radius:28px;padding:10px 16px;font-weight:800;cursor:pointer;background:#ffcc80;color:#4e342e;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+    .btn:hover{filter:brightness(1.03)}
+    .btn--brand{background:#4caf50;color:#fff}
+    .btn--big{padding:14px 18px}
+    .pill{display:inline-block;margin-left:8px;min-width:22px;padding:2px 8px;border-radius:999px;background:#e57373;color:#fff;text-align:center;font-weight:800}
+    .card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:16px 18px;margin-bottom:18px}
+    .shortcuts{display:flex;gap:12px;flex-wrap:wrap}
+    .rod-header,.tp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .recent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+    .recent-item{display:flex;gap:10px;align-items:center;background:#fffde7;border:1px solid #ffcc80;border-radius:10px;padding:10px}
+    .recent-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover}
+    .link{display:inline-block;margin-top:10px;font-weight:700;text-decoration:none;color:#4e342e}
+    .tp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+    .tp-card{background:#fffde7;border:1px solid #ffcc80;border-radius:10px;padding:10px}
+    .tp-card h4{margin:0 0 6px}
+    .tp-card a{font-weight:700;text-decoration:none}
+    .thumb{width:90px;height:90px;border-radius:10px;object-fit:cover}
+    @media (max-width:640px){ #quick-search button{display:none} }
+  </style>
+
+  <!-- Lógica do dashboard -->
+  <script>
+    // Chaves/Helpers
+    const LS_REC   = 'mealmaster_receitas';
+    const LS_PLANO = 'mealmaster_planoSemanal';
+    const LS_LISTA = 'mealmaster_listaCompras';
+
+    const FALLBACK_IMG = 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=400&q=60';
+
+    // Receitas de fallback (quando ainda não existem no localStorage)
+    const exemplos = [
+      {id:1,titulo:'Panquecas de Aveia', img:'https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=300&q=60'},
+      {id:2,titulo:'Salada de Grão',     img:'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=60'},
+      {id:3,titulo:'Sopa de Abóbora',    img:'https://images.unsplash.com/photo-1543352634-02fcb9db8f1e?auto=format&fit=crop&w=300&q=60'},
+      {id:4,titulo:'Tosta de Abacate',   img:'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=300&q=60'},
+      {id:5,titulo:'Bife com Legumes',   img:'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=300&q=60'}
+    ];
+
+    function lerLivro(){
+      try{
+        const raw = localStorage.getItem(LS_REC);
+        const arr = raw ? JSON.parse(raw) : null;
+        if (Array.isArray(arr) && arr.length) return arr;
+      }catch{}
+      return exemplos;
+    }
+    function lerPlano(){
+      try{ return JSON.parse(localStorage.getItem(LS_PLANO)) || {}; }catch{ return {}; }
+    }
+    function lerLista(){
+      try{ return JSON.parse(localStorage.getItem(LS_LISTA)) || {}; }catch{ return {}; }
+    }
+    function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+    // Link de detalhe: se tiver id, vai direto a receita.html?id=…; senão, abre receitas com query
+    function recipeLink(r){
+      return (r && r.id != null) ? `receita.html?id=${encodeURIComponent(r.id)}`
+                                 : `receitas.html?q=${encodeURIComponent(r?.titulo||'')}`;
+    }
+
+    // ---- Pesquisa rápida
+    document.getElementById('quick-search').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const q = (document.getElementById('qs-input').value || '').trim();
+      const url = q ? `receitas.html?q=${encodeURIComponent(q)}` : 'receitas.html';
+      location.href = url;
+    });
+
+    // Sugestões no datalist
+    (function fillDatalist(){
+      const dl = document.getElementById('qs-sugestoes');
+      const titulos = lerLivro().map(r=>r.titulo);
+      dl.innerHTML = titulos.slice(-30).reverse().map(t=>`<option value="${t}">`).join('');
+    })();
+
+    // ---- Badge com itens por comprar
+    (function renderBadge(){
+      const lista = lerLista();
+      let pendentes = 0;
+      Object.values(lista).forEach(arr => {
+        (arr||[]).forEach(i => { if(!i.comprado) pendentes++; });
+      });
+      const badge = document.getElementById('badge-compras');
+      badge.textContent = pendentes ? pendentes : '';
+      badge.style.display = pendentes ? 'inline-block' : 'none';
+    })();
+
+    // ---- Hoje no plano
+    function refeicoesSelecionadas(){
+      try{
+        const raw = localStorage.getItem('refeicoesSelecionadas');
+        const arr = raw ? JSON.parse(raw) : null;
+        if (Array.isArray(arr) && arr.length) {
+          const map = {'pequeno-almoco':'Pequeno almoço','almoco':'Almoço','lanche':'Lanche','jantar':'Jantar','ceia':'Ceia'};
+          return arr.map(k => map[k]).filter(Boolean);
+        }
+      }catch{}
+      return ['Pequeno almoço','Almoço','Lanche','Jantar','Ceia'];
+    }
+    function tipoKeyFromLabel(lbl){
+      return ({'Pequeno almoço':'pequeno-almoco','Almoço':'almoco','Lanche':'lanche','Jantar':'jantar','Ceia':'ceia'}[lbl] || 'almoco');
+    }
+    function getTodayKey(){
+      const d = new Date();
+      const y = d.toISOString().slice(0,10); // yyyy-mm-dd
+      return y;
+    }
+    function renderHojeNoPlano(){
+      const plano = lerPlano();
+      const refeicoes = refeicoesSelecionadas();
+      const hojeKey = getTodayKey();
+      const livro = lerLivro();
+      const byName = Object.fromEntries(livro.map(r => [r.titulo, r]));
+
+      const box = document.getElementById('tp-conteudo');
+      box.innerHTML = '';
+
+      const obj = plano[hojeKey] || {};
+      let found = 0;
+
+      refeicoes.forEach(rotulo => {
+        const nome = obj[rotulo];
+        if (!nome || nome === '__NAO__') return;
+        found++;
+
+        const r = byName[nome] || livro.find(x=>x.titulo===nome) || {titulo:nome, img:FALLBACK_IMG};
+        const a = document.createElement('article');
+        a.className = 'tp-card';
+        a.innerHTML = `
+          <h4>${rotulo}</h4>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <img class="thumb" src="${r.img||FALLBACK_IMG}" alt="Imagem de ${r.titulo}" />
+            <div>
+              <div style="font-weight:800;margin-bottom:6px">${r.titulo}</div>
+              <a href="${recipeLink(r)}" aria-label="Abrir receita ${r.titulo}">Abrir</a>
+            </div>
+          </div>
+        `;
+        box.appendChild(a);
+      });
+
+      if(!found){
+        box.innerHTML = `<p class="empty">Ainda não tens receitas para hoje. <a class="link" href="calendario.html">Escolher no plano</a></p>`;
+      }
+    }
+
+    // ---- Receita do dia
+    function renderRod(){
+      const r = pickRandom(lerLivro());
+      const el = document.getElementById('rod-conteudo');
+      el.innerHTML = `
+        <div style="display:flex; gap:12px; align-items:center;">
+          <img src="${r.img||FALLBACK_IMG}" alt="Imagem de ${r.titulo}" class="thumb">
+          <div>
+            <h4 style="margin:0 0 6px 0;">${r.titulo}</h4>
+            <a class="btn btn--brand" href="${recipeLink(r)}" aria-label="Abrir receita ${r.titulo}">Ver receita</a>
+          </div>
+        </div>`;
+    }
+    document.getElementById('btn-surpreende').addEventListener('click', renderRod);
+
+    // ---- Recentes (últimas 4 do “livro” como proxy)
+    function renderRecentes(){
+      const livro = lerLivro().slice(-4).reverse();
+      const box = document.getElementById('recent-grid');
+
+      if(!livro.length){
+        box.innerHTML = `<p class="empty">Ainda não tens receitas. <a class="link" href="receitas.html">Adicionar a primeira</a></p>`;
+        return;
+      }
+
+      box.innerHTML = livro.map(r=>`
+        <article class="recent-item">
+          <img class="recent-thumb" src="${r.img||FALLBACK_IMG}" alt="Imagem de ${r.titulo}">
+          <div>
+            <div style="font-weight:800">${r.titulo}</div>
+            <a class="link" href="${recipeLink(r)}" aria-label="Abrir receita ${r.titulo}">Abrir</a>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    // init
+    renderHojeNoPlano();
+    renderRod();
+    renderRecentes();
+  </script>
+</body>
+</html>

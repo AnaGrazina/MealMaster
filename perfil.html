@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MealMaster - Perfil</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Estilos específicos do Perfil (leves, para não chocar com style.css) */
+    main { padding: 28px 40px; color:#4e342e; }
+    h2 { margin: 0 0 18px; font-size: 1.9rem; font-weight: 800; }
+    .grid { display:grid; gap:20px; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); }
+    .card { background:#fffde7; border-radius:14px; padding:18px 20px; box-shadow:0 4px 12px rgba(0,0,0,.08); }
+    .card h3 { margin:0 0 12px; font-weight:800; }
+    .field { margin:10px 0; }
+    .field label { display:block; font-weight:700; margin-bottom:6px; }
+    .field input[type="text"],
+    .field input[type="email"],
+    .field textarea,
+    .chip-input {
+      width:100%; padding:10px 12px; border-radius:10px;
+      border:1.5px solid #ffb74d; background:#fff; color:#4e342e; font-weight:600;
+    }
+    .counter { display:flex; align-items:center; gap:10px; }
+    .counter button { border:0; background:#4caf50; color:#fff; font-weight:800; border-radius:10px; padding:8px 12px; cursor:pointer; }
+    .counter input { width:80px; text-align:center; border:1.5px solid #ffb74d; border-radius:10px; padding:8px 10px; background:#fff; font-weight:700; }
+    .refeicoes { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:8px 14px; }
+    .refeicoes label { user-select:none; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+    .btn { border:0; border-radius:26px; padding:10px 16px; font-weight:800; cursor:pointer; background:#ffcc80; color:#4e342e; box-shadow:0 2px 6px rgba(0,0,0,.08) }
+    .btn--brand{ background:linear-gradient(90deg,#4caf50,#81c784); color:#fffde7; box-shadow:0 6px 14px rgba(129,199,132,.45) }
+    .btn--ghost{ background:#fffde7; border:1.5px solid #ffb74d }
+    .hint { opacity:.7; font-size:.9rem; }
+    .pill { display:inline-block; padding:4px 10px; border-radius:999px; background:#e8f5e9; border:1px dashed #81c784; color:#2e7d32; font-weight:700; margin-left:6px; }
+    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MealMaster</h1>
+    <div class="profile-icon" title="Perfil">👤</div>
+  </header>
+
+  <nav class="sidebar" role="navigation" aria-label="Menu principal">
+    <a href="index.html"     data-route="index.html">Menu Principal</a>
+    <a href="receitas.html"      data-route="receitas.html">Receitas</a>
+    <a href="calendario.html"    data-route="calendario.html">Plano Semanal</a>
+    <a href="listaCompras.html"  data-route="listaCompras.html">Lista de Compras</a>
+    <a href="configuracoes.html" data-route="configuracoes.html">Configurações</a>
+    <a href="perfil.html"        data-route="perfil.html">Perfil</a>
+  </nav>
+
+  <script>
+    // marca menu ativo
+    (function () {
+      const here = location.pathname.split('/').pop() || 'index.html';
+      document.querySelectorAll('.sidebar a').forEach(a => {
+        if (a.getAttribute('data-route') === here) {
+          a.classList.add('active'); a.setAttribute('aria-current','page');
+        }
+      });
+    })();
+  </script>
+
+  <main>
+    <h2>Perfil</h2>
+
+    <form id="perfil-form" class="grid" autocomplete="on">
+      <!-- Dados pessoais -->
+      <section class="card">
+        <h3>Dados Pessoais</h3>
+        <div class="field">
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" name="nome" placeholder="Ex: Ana Filipa" required />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="exemplo@mail.com" />
+        </div>
+        <div class="hint">Guardamos estes dados só no teu navegador (localStorage).</div>
+      </section>
+
+      <!-- Preferências alimentares -->
+      <section class="card">
+        <h3>Preferências Alimentares</h3>
+        <div class="field">
+          <label for="alergias">Alergias / Intolerâncias</label>
+          <textarea id="alergias" name="alergias" rows="3" placeholder="Ex: glúten, lactose"></textarea>
+        </div>
+        <div class="field">
+          <label for="dietas">Dietas / Preferências</label>
+          <input type="text" id="dietas" class="chip-input" placeholder="Ex: vegetariano; baixo carboidrato" />
+          <div class="hint">Separa por vírgulas ou ponto e vírgula.</div>
+        </div>
+      </section>
+
+      <!-- Número de pessoas e refeições diárias -->
+      <section class="card">
+        <h3>Plano diário</h3>
+        <div class="field">
+          <label>Número de pessoas para cozinhar</label>
+          <div class="counter">
+            <button type="button" id="btn-dec" aria-label="Diminuir">−</button>
+            <input type="number" id="num-pessoas" name="numPessoas" value="1" min="1" max="20" />
+            <button type="button" id="btn-inc" aria-label="Aumentar">+</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Quais refeições faz num dia?</label>
+          <div class="refeicoes">
+            <label><input type="checkbox" name="refeicoes" value="pequeno-almoco" /> Pequeno-almoço</label>
+            <label><input type="checkbox" name="refeicoes" value="almoco" /> Almoço</label>
+            <label><input type="checkbox" name="refeicoes" value="lanche" /> Lanche</label>
+            <label><input type="checkbox" name="refeicoes" value="jantar" /> Jantar</label>
+            <label><input type="checkbox" name="refeicoes" value="ceia" /> Ceia</label>
+          </div>
+          <div class="hint">Estas opções alimentam o <span class="pill">Plano Semanal</span>.</div>
+        </div>
+      </section>
+
+      <!-- Ações -->
+      <section class="card">
+        <h3>Ações</h3>
+        <div class="actions">
+          <button type="submit" class="btn btn--brand">Guardar</button>
+          <button type="button" id="btn-aplicar-plano" class="btn">Guardar e ir ao Plano</button>
+          <button type="button" id="btn-export" class="btn btn--ghost">Exportar Perfil</button>
+          <label class="btn btn--ghost" for="import-file">Importar Perfil</label>
+          <input type="file" id="import-file" accept="application/json" hidden />
+          <button type="button" id="btn-reset" class="btn btn--ghost">Limpar Perfil</button>
+        </div>
+        <div class="hint">Exportar/Importar cria um ficheiro JSON com os teus dados (continua tudo local).</div>
+      </section>
+    </form>
+  </main>
+
+  <script>
+    const LS_PERFIL = 'mealmaster_perfil';
+    const LS_REFEICOES = 'refeicoesSelecionadas'; // compat com o que já usavas
+
+    // elementos
+    const form = document.getElementById('perfil-form');
+    const nome = document.getElementById('nome');
+    const email = document.getElementById('email');
+    const alergias = document.getElementById('alergias');
+    const dietas = document.getElementById('dietas');
+    const numPessoas = document.getElementById('num-pessoas');
+    const btnDec = document.getElementById('btn-dec');
+    const btnInc = document.getElementById('btn-inc');
+    const btnAplicarPlano = document.getElementById('btn-aplicar-plano');
+    const btnExport = document.getElementById('btn-export');
+    const btnReset = document.getElementById('btn-reset');
+    const importFile = document.getElementById('import-file');
+
+    function loadPerfil(){
+      try{
+        const raw = localStorage.getItem(LS_PERFIL);
+        return raw ? JSON.parse(raw) : null;
+      }catch{ return null; }
+    }
+    function savePerfil(obj){
+      localStorage.setItem(LS_PERFIL, JSON.stringify(obj));
+      // também guarda as refeições no nome antigo, para o calendário ler sem mexer
+      localStorage.setItem(LS_REFEICOES, JSON.stringify(obj.refeicoes || []));
+    }
+
+    function readRefeicoesMarcadas(){
+      return Array.from(document.querySelectorAll('input[name="refeicoes"]:checked')).map(cb=>cb.value);
+    }
+    function marcarRefeicoes(arr){
+      const set = new Set(arr||[]);
+      document.querySelectorAll('input[name="refeicoes"]').forEach(cb=>{
+        cb.checked = set.has(cb.value);
+      });
+    }
+
+    // carregar ao abrir
+    (function init(){
+      const p = loadPerfil();
+      if(p){
+        nome.value = p.nome || '';
+        email.value = p.email || '';
+        alergias.value = p.alergias || '';
+        dietas.value = (p.dietas || []).join(', ');
+        numPessoas.value = p.numPessoas || 1;
+        marcarRefeicoes(p.refeicoes || []);
+      }else{
+        // defaults simpáticos
+        marcarRefeicoes(['pequeno-almoco','almoco','jantar']);
+        numPessoas.value = 1;
+      }
+    })();
+
+    // +/-
+    btnDec.addEventListener('click', () => {
+      let v = parseInt(numPessoas.value||'1',10);
+      numPessoas.value = Math.max(1, v-1);
+    });
+    btnInc.addEventListener('click', () => {
+      let v = parseInt(numPessoas.value||'1',10);
+      numPessoas.value = Math.min(20, v+1);
+    });
+
+    // submit
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const perfil = {
+        nome: nome.value.trim(),
+        email: email.value.trim(),
+        alergias: alergias.value.trim(),
+        dietas: (dietas.value||'').split(/[;,]/).map(s=>s.trim()).filter(Boolean),
+        numPessoas: Math.max(1, Math.min(20, parseInt(numPessoas.value||'1',10))),
+        refeicoes: readRefeicoesMarcadas()
+      };
+      savePerfil(perfil);
+      alert('Perfil guardado com sucesso!');
+    });
+
+    // guardar e ir ao plano
+    btnAplicarPlano.addEventListener('click', () => {
+      form.requestSubmit(); // dispara o submit acima
+      // pequeno atraso só para garantir setItem antes de navegar
+      setTimeout(()=>{ location.href = 'calendario.html'; }, 50);
+    });
+
+    // exportar/importar
+    btnExport.addEventListener('click', () => {
+      const data = loadPerfil() || {
+        nome:'', email:'', alergias:'', dietas:[], numPessoas:1, refeicoes:[]
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'mealmaster-perfil.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    importFile.addEventListener('change', async () => {
+      const file = importFile.files[0];
+      if(!file) return;
+      try{
+        const text = await file.text();
+        const obj = JSON.parse(text);
+        // validação mínima
+        if(typeof obj !== 'object') throw new Error('Formato inválido');
+        savePerfil({
+          nome: obj.nome||'',
+          email: obj.email||'',
+          alergias: obj.alergias||'',
+          dietas: Array.isArray(obj.dietas)? obj.dietas : [],
+          numPessoas: obj.numPessoas||1,
+          refeicoes: Array.isArray(obj.refeicoes)? obj.refeicoes : []
+        });
+        // re-render no formulário
+        const p = loadPerfil();
+        nome.value = p.nome||''; email.value = p.email||'';
+        alergias.value = p.alergias||'';
+        dietas.value = (p.dietas||[]).join(', ');
+        numPessoas.value = p.numPessoas||1;
+        marcarRefeicoes(p.refeicoes||[]);
+        alert('Perfil importado com sucesso!');
+        importFile.value = '';
+      }catch(e){
+        alert('Não foi possível importar o ficheiro. Verifica se é um JSON válido.');
+      }
+    });
+
+    // limpar tudo
+    btnReset.addEventListener('click', () => {
+      if(confirm('Queres mesmo limpar o teu perfil?')){
+        localStorage.removeItem(LS_PERFIL);
+        // mantemos LS_REFEICOES sincronizado para o calendário não estranhar
+        localStorage.removeItem(LS_REFEICOES);
+        // limpar campos
+        nome.value = ''; email.value = '';
+        alergias.value = ''; dietas.value = '';
+        marcarRefeicoes(['pequeno-almoco','almoco','jantar']);
+        numPessoas.value = 1;
+      }
+    });
+  </script>
+</body>
+</html>

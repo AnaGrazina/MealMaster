@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Receita - MealMaster</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#fffde7; color:#4e342e; margin:0; }
+    header { padding:20px 30px; background:#4caf50; color:#fff; display:flex; justify-content:space-between; align-items:center; }
+    header h1 { margin:0; font-weight:700; }
+
+    main { max-width: 1000px; margin: 28px auto; padding: 0 16px 60px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+    .topbar h2 { margin:0; }
+    .btn { border:0; border-radius:28px; padding:10px 16px; font-weight:800; cursor:pointer; background:#ffcc80; color:#4e342e; box-shadow:0 2px 6px rgba(0,0,0,.08) }
+    .btn:hover { filter:brightness(1.03) }
+    .btn--brand{ background:linear-gradient(90deg,#ffb347,#ffcc33); color:#6d4c41; box-shadow:0 6px 14px rgba(255,179,71,.45) }
+    .btn--danger{ background:#e57373; color:#fff }
+    .btn--ghost{ background:#fffde7; border:1.5px solid #ffb74d }
+
+    .recipe-hero { display:grid; grid-template-columns: 340px 1fr; gap:18px; align-items:start; }
+    .recipe-hero img { width:100%; height:260px; object-fit:cover; border-radius:12px; background:#fff9c4; }
+    @media (max-width:800px){ .recipe-hero{ grid-template-columns:1fr } .recipe-hero img{ height:220px } }
+
+    .tags { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 6px }
+    .tag { background:#4caf50; color:#fff; padding:6px 10px; border-radius:999px; font-weight:700; font-size:.85rem }
+
+    .card { background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.08); padding:14px 16px; }
+    .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+    @media (max-width:900px){ .grid-2{ grid-template-columns:1fr } }
+
+    .section-title { margin:0 0 10px; font-size:1.2rem; }
+    .ing-list, .steps { white-space:pre-wrap; background:#fffde7; border:1.5px solid #ffcc80; border-radius:10px; padding:10px 12px; min-height:120px }
+
+    /* Modal base */
+    .modal-bg{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.35); z-index:999}
+    .modal-bg.active{display:flex}
+    .modal{background:#fffde7; border-radius:16px; width:min(780px,94vw); padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.3)}
+    .modal h3{margin:0 0 12px}
+    .modal .form-row{margin-bottom:12px}
+    .modal .actions{display:flex; gap:10px; justify-content:flex-end; margin-top:10px}
+    input[type="text"], input[type="url"], input[type="date"], select, textarea {
+      width:100%; padding:8px 12px; border-radius:8px; border:1.5px solid #ffb74d; background:#fffde7; font-weight:600; color:#4e342e; box-sizing:border-box;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>MealMaster</h1>
+    <div class="profile-icon" title="Perfil">👤</div>
+  </header>
+
+  <nav class="sidebar" role="navigation" aria-label="Menu principal">
+    <a href="index.html"     data-route="index.html">Menu Principal</a>
+    <a href="receitas.html"      data-route="receitas.html">Receitas</a>
+    <a href="calendario.html"    data-route="calendario.html">Plano Semanal</a>
+    <a href="listaCompras.html"  data-route="listaCompras.html">Lista de Compras</a>
+    <a href="configuracoes.html" data-route="configuracoes.html">Configurações</a>
+    <a href="perfil.html"        data-route="perfil.html">Perfil</a>
+  </nav>
+
+  <script>
+    // ativa o link atual no menu
+    (function () {
+      const here = location.pathname.split('/').pop() || 'index.html';
+      document.querySelectorAll('.sidebar a').forEach(a => {
+        if (a.getAttribute('data-route') === here) {
+          a.classList.add('active');
+          a.setAttribute('aria-current', 'page');
+        }
+      });
+    })();
+  </script>
+
+  <main>
+    <div class="topbar">
+      <h2 id="r-title">...</h2>
+      <div class="actions">
+        <button class="btn btn--brand" id="btn-add-plano">Adicionar ao plano semanal</button>
+        <button class="btn" id="btn-add-compras">Enviar para lista de compras</button>
+        <button class="btn btn--ghost" id="btn-editar">Editar</button>
+        <a class="btn btn--danger" href="receitas.html">Voltar</a>
+      </div>
+    </div>
+
+    <section class="recipe-hero card">
+      <img id="r-img" alt="Imagem da receita" />
+      <div>
+        <div class="tags" id="r-tags"></div>
+        <div class="r-meta" id="r-meta" style="font-weight:700; opacity:.85"></div>
+        <p id="r-desc" style="margin-top:8px; opacity:.9">—</p>
+      </div>
+    </section>
+
+    <section class="grid-2" style="margin-top:16px">
+      <div class="card">
+        <h3 class="section-title">Ingredientes</h3>
+        <div id="r-ing" class="ing-list"></div>
+      </div>
+      <div class="card">
+        <h3 class="section-title">Passos</h3>
+        <div id="r-steps" class="steps"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL: Editar receita -->
+  <div class="modal-bg" id="modal-edit-bg">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+      <h3 id="editTitle">Editar Receita</h3>
+      <form id="form-edit">
+        <div class="grid-2">
+          <div class="form-row">
+            <label for="e-titulo">Título</label>
+            <input id="e-titulo" type="text" required />
+          </div>
+          <div class="form-row">
+            <label for="e-tipo">Tipo</label>
+            <select id="e-tipo" required>
+              <option value="pequeno-almoco">Pequeno-almoço</option>
+              <option value="almoco">Almoço</option>
+              <option value="lanche">Lanche</option>
+              <option value="jantar">Jantar</option>
+              <option value="ceia">Ceia</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="e-tags">Tags (vírgulas)</label>
+            <input id="e-tags" type="text" placeholder="rápido, vegetariano" />
+          </div>
+          <div class="form-row">
+            <label for="e-img">URL da imagem</label>
+            <input id="e-img" type="url" placeholder="https://..." />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="e-ing">Ingredientes</label>
+          <textarea id="e-ing" rows="4"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="e-passos">Passos</label>
+          <textarea id="e-passos" rows="5"></textarea>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" id="e-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn--brand">Gravar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Adicionar ao plano -->
+  <div class="modal-bg" id="modal-plano-bg">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="planoTitle">
+      <h3 id="planoTitle">Adicionar ao Plano Semanal</h3>
+      <form id="form-plano">
+        <div class="form-row">
+          <label for="p-data">Data</label>
+          <input id="p-data" type="date" required />
+        </div>
+        <div class="form-row">
+          <label for="p-ref">Refeição</label>
+          <select id="p-ref" required>
+            <option>Pequeno almoço</option>
+            <option>Almoço</option>
+            <option>Lanche</option>
+            <option>Jantar</option>
+            <option>Ceia</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" id="p-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn--brand">Adicionar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // —— keys de storage
+    const LS_REC = 'mealmaster_receitas';
+    const LS_PLANO = 'mealmaster_planoSemanal';
+    const LS_LISTA = 'mealmaster_listaCompras';
+
+    // util
+    const $ = s => document.querySelector(s);
+
+    function getIdFromQuery(){
+      const idStr = new URLSearchParams(location.search).get('id');
+      return idStr ? Number(idStr) : null;
+    }
+    function lerLivro(){
+      try{ const raw = localStorage.getItem(LS_REC); const arr = raw?JSON.parse(raw):[]; return Array.isArray(arr)?arr:[]; }catch{return []}
+    }
+    function guardarLivro(arr){ localStorage.setItem(LS_REC, JSON.stringify(arr)); }
+    function lerPlano(){
+      try{ const raw = localStorage.getItem(LS_PLANO); return raw?JSON.parse(raw):{}; }catch{return {}}
+    }
+    function guardarPlano(obj){ localStorage.setItem(LS_PLANO, JSON.stringify(obj)); }
+    function lerLista(){
+      try{ const raw = localStorage.getItem(LS_LISTA); return raw?JSON.parse(raw):{}; }catch{return {}}
+    }
+    function guardarLista(obj){ localStorage.setItem(LS_LISTA, JSON.stringify(obj)); }
+
+    let receita = null;
+
+    function render(){
+      if(!receita){
+        $('main').innerHTML = `
+          <div class="card" style="text-align:center">
+            <h3>Receita não encontrada</h3>
+            <p>Volta à <a href="receitas.html">lista de receitas</a>.</p>
+          </div>`;
+        return;
+      }
+      $('#r-title').textContent = receita.titulo;
+      $('#r-img').src = receita.img || 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=800&q=60';
+      $('#r-img').alt = 'Imagem da receita ' + receita.titulo;
+
+      // tags
+      const tags = receita.tags || [];
+      $('#r-tags').innerHTML = tags.map(t=>`<span class="tag">${t}</span>`).join('') || '<span style="opacity:.7">sem tags</span>';
+      $('#r-meta').textContent = traduzTipo(receita.tipo || 'almoco');
+
+      // ingredientes & passos
+      $('#r-ing').textContent = receita.ingredientes || '—';
+      $('#r-steps').textContent = receita.passos || '—';
+      $('#r-desc').textContent = receita.descricao || '';
+    }
+
+    function traduzTipo(t){
+      return ({'pequeno-almoco':'Pequeno-almoço','almoco':'Almoço','lanche':'Lanche','jantar':'Jantar','ceia':'Ceia'}[t]||t);
+    }
+
+    // ——— Editar
+    function abrirEditar(){
+      $('#e-titulo').value = receita.titulo || '';
+      $('#e-tipo').value = receita.tipo || 'almoco';
+      $('#e-tags').value = (receita.tags||[]).join(', ');
+      $('#e-img').value = receita.img || '';
+      $('#e-ing').value = receita.ingredientes || '';
+      $('#e-passos').value = receita.passos || '';
+      $('#modal-edit-bg').classList.add('active');
+      $('#e-titulo').focus();
+    }
+    function fecharEditar(){ $('#modal-edit-bg').classList.remove('active'); }
+
+    // ——— Plano semanal
+    function abrirPlano(){
+      const today = new Date().toISOString().slice(0,10);
+      $('#p-data').value = today;
+      $('#p-ref').value = 'Jantar';
+      $('#modal-plano-bg').classList.add('active');
+    }
+    function fecharPlano(){ $('#modal-plano-bg').classList.remove('active'); }
+
+    // ——— Lista de compras
+    function enviarParaCompras(){
+      const lista = lerLista();
+      // categoria padrão "Outros"
+      if(!lista['Outros']) lista['Outros'] = [];
+      const linhas = (receita.ingredientes || '').split('\n').map(l=>l.trim()).filter(Boolean);
+
+      linhas.forEach(txt=>{
+        // Cria item simples; se quiseres, podes tentar separar quantidade vs nome
+        lista['Outros'].push({ nome: txt, quantidade: '', comprado: false });
+      });
+
+      guardarLista(lista);
+      alert('Ingredientes enviados para a lista de compras ✅');
+      // opcional: ir directo para a página
+      // location.href = 'listaCompras.html';
+    }
+
+    // —— eventos
+    $('#btn-editar').addEventListener('click', abrirEditar);
+    $('#e-cancelar').addEventListener('click', fecharEditar);
+    $('#form-edit').addEventListener('submit', e=>{
+      e.preventDefault();
+      const livro = lerLivro();
+      const i = livro.findIndex(x=>x.id===receita.id);
+      const upd = {
+        ...receita,
+        titulo: $('#e-titulo').value.trim(),
+        tipo: $('#e-tipo').value,
+        tags: $('#e-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+        img: $('#e-img').value.trim(),
+        ingredientes: $('#e-ing').value,
+        passos: $('#e-passos').value
+      };
+      if(i>=0) livro[i]=upd;
+      guardarLivro(livro);
+      receita = upd;
+      fecharEditar();
+      render();
+    });
+
+    $('#btn-add-plano').addEventListener('click', abrirPlano);
+    $('#p-cancelar').addEventListener('click', fecharPlano);
+    $('#form-plano').addEventListener('submit', e=>{
+      e.preventDefault();
+      const data = $('#p-data').value;            // YYYY-MM-DD
+      const refeicao = $('#p-ref').value;         // "Jantar", etc.
+      if(!data || !refeicao) return;
+
+      const plano = lerPlano();
+      if(!plano[data]) plano[data] = {};
+      plano[data][refeicao] = receita.titulo;     // guarda só o nome (simples)
+      guardarPlano(plano);
+      fecharPlano();
+      alert('Adicionado ao plano ✅');
+    });
+
+    $('#btn-add-compras').addEventListener('click', enviarParaCompras);
+
+    // —— boot
+    (function init(){
+      const id = getIdFromQuery();
+      if(!id){ render(); return; }
+      const livro = lerLivro();
+      receita = livro.find(r=>r.id===id) || null;
+      render();
+    })();
+  </script>
+</body>
+</html>

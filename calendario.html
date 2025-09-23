@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MealMaster - Calendário</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { background:#fffde7; color:#4e342e; margin:0 }
+    main { padding: 20px 40px; }
+    .calendario-header { display:flex; justify-content:center; align-items:center; gap:20px; font-weight:700; font-size:1.3rem; margin-bottom:18px; user-select:none; }
+    .calendario-header button { background:#4caf50; border:none; color:#fff; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:700; font-size:1.05rem; box-shadow:0 3px 6px rgba(0,0,0,.2); }
+    .calendario-header button:hover { background:#388e3c; }
+
+    .toolbar { display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; margin-bottom:16px }
+    .btn{border:0;border-radius:28px;padding:10px 16px;font-weight:800;cursor:pointer;background:#ffcc80;color:#4e342e;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+    .btn--brand{background:linear-gradient(90deg,#ffb347,#ffcc33); color:#6d4c41; box-shadow:0 6px 14px rgba(255,179,71,.45)}
+    .btn--brand:hover{filter:brightness(1.06)}
+    .btn--ghost{background:#fffde7;border:1.5px solid #ffb74d}
+    .btn--danger{background:#e57373;color:#fff}
+
+    table.calendario { width:100%; border-collapse:collapse; table-layout:fixed; font-size:.95rem; user-select:none; background:#fff }
+    table.calendario th, table.calendario td { border:1px solid #d7ccc8; padding:12px 8px; text-align:center; vertical-align:middle; min-width:90px; max-width:130px; }
+    table.calendario th { background:#ffcc80; color:#4e342e; position:sticky; top:0 }
+    table.calendario tbody tr:nth-child(odd) { background:#fffdf3; }
+    .slot { background:#ffecb3; border-radius:8px; padding:6px; cursor:pointer; box-shadow:0 2px 5px rgba(255,179,71,.5); transition:background-color .25s; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .slot:hover { background:#ffe082; }
+    .slot.nao { background:#eee; color:#888; font-style:italic }
+
+    .btn-completar { margin-top:10px; background:linear-gradient(90deg,#ffb347,#ffcc33); border:none; padding:12px 22px; border-radius:30px; font-size:1rem; font-weight:800; color:#6d4c41; cursor:pointer; box-shadow:0 5px 12px rgba(255,179,71,.7); }
+
+    /* Modal */
+    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; justify-content:center; align-items:center; z-index:999; }
+    .modal-bg.active { display:flex; }
+    .modal { background:#fffde7; border-radius:16px; padding:20px 22px; box-shadow:0 6px 18px rgba(0,0,0,.3); width:min(440px,92vw); color:#4e342e; font-weight:600; }
+    .modal h3 { margin:0 0 10px; font-weight:800; font-size:1.25rem; }
+    .modal label { display:block; margin:10px 0 6px; font-weight:700; }
+    .modal input[type="text"], .modal select { width:100%; padding:9px 10px; border-radius:10px; border:1.5px solid #ffb74d; font-size:1rem; background:#fffde7; }
+    .modal .row { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap }
+    .tag-tipo{font-size:.85rem; opacity:.7}
+
+    /* Print */
+    @media print {
+      header, nav.sidebar, .toolbar, .btn-completar { display:none !important; }
+      main { padding:0; }
+      table.calendario th, table.calendario td { border:1px solid #999; padding:6px }
+      .slot { box-shadow:none }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MealMaster</h1>
+    <div class="profile-icon" title="Perfil">👤</div>
+  </header>
+
+  <nav class="sidebar" role="navigation" aria-label="Menu principal">
+    <a href="index.html"     data-route="index.html">Menu Principal</a>
+    <a href="receitas.html"      data-route="receitas.html">Receitas</a>
+    <a href="calendario.html"    data-route="calendario.html">Plano Semanal</a>
+    <a href="listaCompras.html"  data-route="listaCompras.html">Lista de Compras</a>
+    <a href="configuracoes.html" data-route="configuracoes.html">Configurações</a>
+    <a href="perfil.html"        data-route="perfil.html">Perfil</a>
+  </nav>
+
+  <script>
+    // ativa nav
+    (function () {
+      const here = location.pathname.split('/').pop() || 'index.html';
+      document.querySelectorAll('.sidebar a').forEach(a => {
+        if (a.getAttribute('data-route') === here) { a.classList.add('active'); a.setAttribute('aria-current','page'); }
+      });
+    })();
+  </script>
+
+  <main>
+    <div class="calendario-header">
+      <button id="prevWeek" aria-label="Semana anterior">&lt;</button>
+      <div id="semanaAtual"></div>
+      <button id="nextWeek" aria-label="Semana seguinte">&gt;</button>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn btn--ghost" id="btnExportar">Exportar semana (PDF)</button>
+      <button class="btn btn--brand" id="btnGerarCompras">Gerar lista de compras</button>
+    </div>
+
+    <table class="calendario" aria-label="Calendário semanal">
+      <thead>
+        <tr>
+          <th>Refeição / Dia</th>
+          <th>Segunda</th><th>Terça</th><th>Quarta</th>
+          <th>Quinta</th><th>Sexta</th><th>Sábado</th><th>Domingo</th>
+        </tr>
+      </thead>
+      <tbody id="calendarioCorpo"></tbody>
+    </table>
+
+    <button class="btn-completar" id="btnCompletar">Completar cardápio semanal</button>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-bg" id="modalEdit">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">Escolher receita <span id="etiqueta-tipo" class="tag-tipo"></span></h3>
+
+      <label for="inputReceita">Pesquisar / escrever manualmente</label>
+      <input type="text" id="inputReceita" placeholder="Nome da receita..." list="listaReceitas" />
+      <datalist id="listaReceitas"></datalist>
+
+      <div class="row">
+        <button class="btn" id="btnNaoCozinhar" type="button">Não cozinhar</button>
+        <button class="btn btn--ghost" id="btnCancelar" type="button">Cancelar</button>
+        <button class="btn btn--brand" id="btnSalvar" type="button">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ——— exemplos fallback
+    const receitasExemplo = [
+      {id:1,titulo:"Ovos mexidos",tipo:'pequeno-almoco', ingredientes:"- ovos\n- manteiga\n- sal"},
+      {id:2,titulo:"Panquecas",tipo:'pequeno-almoco', ingredientes:"- farinha\n- ovo\n- leite"},
+      {id:3,titulo:"Salada de quinoa",tipo:'almoco', ingredientes:"- quinoa\n- tomate\n- pepino"},
+      {id:4,titulo:"Sopa de legumes",tipo:'jantar', ingredientes:"- legumes variados\n- água\n- sal"},
+      {id:5,titulo:"Sanduíche natural",tipo:'lanche', ingredientes:"- pão\n- fiambre\n- queijo"},
+      {id:6,titulo:"Frango grelhado",tipo:'jantar', ingredientes:"- peito de frango\n- sal\n- azeite"},
+      {id:7,titulo:"Iogurte com frutas",tipo:'ceia', ingredientes:"- iogurte\n- fruta"},
+      {id:8,titulo:"Tosta mista",tipo:'lanche', ingredientes:"- pão\n- fiambre\n- queijo"},
+      {id:9,titulo:"Sushi vegetariano",tipo:'jantar', ingredientes:"- arroz sushi\n- alga nori\n- vegetais"},
+      {id:10,titulo:"Batata doce assada",tipo:'jantar', ingredientes:"- batata doce\n- azeite\n- sal"}
+    ];
+
+    // —— regras do plano
+    const LS_RULES = 'mealmaster_regrasPlano';
+
+    function loadRules(){
+      try { return JSON.parse(localStorage.getItem(LS_RULES)) || {}; }
+      catch { return {}; }
+    }
+
+    // verão ≈ Jun–Set (meses 5–8); inverno ≈ Dez–Fev (meses 11,0,1)
+    const seasonFromMonth = m => (m>=5 && m<=8) ? 'verao' : (m===11 || m<=1 ? 'inverno' : 'entre');
+
+    function splitWords(s){
+      return (s || '').toLowerCase().split(/[;,]/).map(x => x.trim()).filter(Boolean);
+    }
+
+    function hasAny(txt, words){
+      const t = (txt || '').toLowerCase();
+      return words.some(w => t && t.length && t.includes(w));
+    }
+
+    
+    // ——— aplica as regras a uma lista de candidatas
+    function applyRulesToCandidates(arr, tipoKey, date, rules){
+      // época (usamos a função que já tens)
+      const m = date.getMonth();
+      const verao   = (m >= 5 && m <= 8);
+      const inverno = (m === 11 || m <= 1);
+
+      const rTipo = rules[tipoKey] || {};
+      const incBase = (rTipo.incluir || []).map(x => x.toLowerCase());
+      const excBase = (rTipo.excluir || []).map(x => x.toLowerCase());
+      const incVer  = (verao   && rTipo.verao   && rTipo.verao.incluir)   ? rTipo.verao.incluir.map(x=>x.toLowerCase())   : [];
+      const excVer  = (verao   && rTipo.verao   && rTipo.verao.excluir)   ? rTipo.verao.excluir.map(x=>x.toLowerCase())   : [];
+      const incInv  = (inverno && rTipo.inverno && rTipo.inverno.incluir) ? rTipo.inverno.incluir.map(x=>x.toLowerCase()) : [];
+      const excInv  = (inverno && rTipo.inverno && rTipo.inverno.excluir) ? rTipo.inverno.excluir.map(x=>x.toLowerCase()) : [];
+
+      const incWords = [...incBase, ...incVer, ...incInv];
+      const excWords = [...excBase, ...excVer, ...excInv];
+
+      // 1) tira receitas que “batem” nas palavras a excluir
+      let out = arr.filter(r => !excWords.length || !recipeMatches(r, excWords));
+
+      // 2) se houver “incluir”, dá prioridade às que combinam com essas palavras
+      if (incWords.length){
+        const preferidas = out.filter(r => recipeMatches(r, incWords));
+        if (preferidas.length) out = preferidas;
+      }
+      return out;
+    }
+
+    function recipeMatches(r, words){
+      return hasAny(r.titulo, words) || hasAny((r.tags || []).join(' '), words);
+    }
+
+    // ——— refeições do perfil
+    function lerRefeicoesDoPerfil(){
+      try {
+        const salvo = JSON.parse(localStorage.getItem('refeicoesSelecionadas'));
+        if (Array.isArray(salvo) && salvo.length) {
+          const map = {'pequeno-almoco':'Pequeno almoço','almoco':'Almoço','lanche':'Lanche','jantar':'Jantar','ceia':'Ceia'};
+          return salvo.map(k => map[k]).filter(Boolean);
+        }
+      } catch(e){}
+      return ["Pequeno almoço","Almoço","Lanche","Jantar","Ceia"];
+    }
+    let refeicoes = lerRefeicoesDoPerfil();
+
+    // ——— helpers
+    const LS_REC   = 'mealmaster_receitas';
+    const LS_PLANO = 'mealmaster_planoSemanal';
+    const LS_LISTA = 'mealmaster_listaCompras';
+
+    function lerLivroReceitas(){
+      try{
+        const raw = localStorage.getItem(LS_REC);
+        const arr = raw? JSON.parse(raw) : [];
+        if(Array.isArray(arr) && arr.length) return arr;
+      }catch(e){}
+      return receitasExemplo; // fallback
+    }
+    function lerPlano(){ try{ return JSON.parse(localStorage.getItem(LS_PLANO)) || {}; }catch{ return {}; } }
+    function gravarPlano(p){ localStorage.setItem(LS_PLANO, JSON.stringify(p)); }
+    function lerLista(){ try{ return JSON.parse(localStorage.getItem(LS_LISTA)) || {}; }catch{ return {}; } }
+    function gravarLista(o){ localStorage.setItem(LS_LISTA, JSON.stringify(o)); }
+
+    const tipoKeyFromLabel = (lbl) => ({
+      'Pequeno almoço':'pequeno-almoco',
+      'Almoço':'almoco',
+      'Lanche':'lanche',
+      'Jantar':'jantar',
+      'Ceia':'ceia'
+    }[lbl] || 'almoco');
+
+    // ——— estado/plano
+    let planoSemanal = lerPlano();
+
+    // ——— calendario
+    let dataAtual = new Date();
+    function getMonday(d){ d = new Date(d); let day = d.getDay(); let diff = d.getDate() - day + (day===0 ? -6 : 1); return new Date(d.setDate(diff)); }
+    function formatDate(d){ return d.toLocaleDateString('pt-PT',{ day:'2-digit', month:'short' }); }
+
+    function atualizarCalendario(){
+      const monday = getMonday(dataAtual);
+      const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+      document.getElementById('semanaAtual').textContent = `${formatDate(monday)} a ${formatDate(sunday)}`;
+
+      const tbody = document.getElementById('calendarioCorpo');
+      tbody.innerHTML = '';
+
+      for (let refeicao of refeicoes) {
+        const tr = document.createElement('tr');
+        const tdRefeicao = document.createElement('td');
+        tdRefeicao.textContent = refeicao;
+        tdRefeicao.style.fontWeight = '700';
+        tr.appendChild(tdRefeicao);
+
+        for (let i=0;i<7;i++){
+          const dia = new Date(monday); dia.setDate(monday.getDate()+i);
+          const diaKey = dia.toISOString().slice(0,10);
+
+          const td = document.createElement('td');
+          const slot = document.createElement('div');
+          slot.className = 'slot';
+          slot.tabIndex = 0; slot.setAttribute('role','button');
+          slot.setAttribute('aria-label', `${refeicao} de ${dia.toLocaleDateString('pt-PT',{weekday:'long'})}, editar`);
+
+          const receita = (planoSemanal[diaKey] && planoSemanal[diaKey][refeicao]) || '';
+          const nao = receita === '__NAO__';
+          slot.textContent = nao ? '— não cozinhar —' : (receita || '+ adicionar');
+          if(nao) slot.classList.add('nao'); else slot.classList.remove('nao');
+
+          slot.onclick = () => abrirModal(diaKey, refeicao);
+          slot.onkeydown = (e) => { if(e.key==='Enter' || e.key===' ') abrirModal(diaKey, refeicao); };
+
+          td.appendChild(slot); tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+    }
+
+    // ——— modal
+    const modal = document.getElementById('modalEdit');
+    const inputReceita = document.getElementById('inputReceita');
+    const datalist = document.getElementById('listaReceitas');
+    const btnSalvar = document.getElementById('btnSalvar');
+    const btnCancelar = document.getElementById('btnCancelar');
+    const btnNaoCozinhar = document.getElementById('btnNaoCozinhar');
+    const etiquetaTipo = document.getElementById('etiqueta-tipo');
+
+    let editingDia = null, editingRefeicao = null;
+
+    function abrirModal(dia, ref){
+      editingDia = dia; editingRefeicao = ref;
+
+      const tipoKey = tipoKeyFromLabel(ref);
+      etiquetaTipo.textContent = `(${ref})`;
+      const livro = lerLivroReceitas().filter(r => r.tipo === tipoKey);
+      datalist.innerHTML = '';
+      livro.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.titulo;
+        datalist.appendChild(opt);
+      });
+
+      const atual = (planoSemanal[dia] && planoSemanal[dia][ref]) || '';
+      inputReceita.value = (atual && atual !== '__NAO__') ? atual : '';
+      modal.classList.add('active');
+      inputReceita.focus();
+      inputReceita.select();
+    }
+
+    function fecharModal(){ modal.classList.remove('active'); editingDia = null; editingRefeicao = null; }
+
+    btnSalvar.onclick = () => {
+      if(!editingDia || !editingRefeicao) return;
+      const valor = inputReceita.value.trim();
+      if(!planoSemanal[editingDia]) planoSemanal[editingDia] = {};
+      planoSemanal[editingDia][editingRefeicao] = valor;
+      gravarPlano(planoSemanal);
+      fecharModal(); atualizarCalendario();
+    };
+    btnCancelar.onclick = fecharModal;
+    btnNaoCozinhar.onclick = () => {
+      if(!editingDia || !editingRefeicao) return;
+      if(!planoSemanal[editingDia]) planoSemanal[editingDia] = {};
+      planoSemanal[editingDia][editingRefeicao] = '__NAO__';
+      gravarPlano(planoSemanal);
+      fecharModal(); atualizarCalendario();
+    };
+    modal.onclick = (e) => { if(e.target === modal) fecharModal(); };
+
+    // ——— navegação
+    document.getElementById('prevWeek').onclick = () => { dataAtual.setDate(dataAtual.getDate()-7); atualizarCalendario(); };
+    document.getElementById('nextWeek').onclick = () => { dataAtual.setDate(dataAtual.getDate()+7); atualizarCalendario(); };
+
+    // ——— completar vazios (com regras do utilizador)
+    document.getElementById('btnCompletar').onclick = () => {
+      const monday = getMonday(dataAtual);
+      const livro  = lerLivroReceitas();
+      const rules  = loadRules();                 // <- lê as regras guardadas nas Configurações
+
+      for (let i = 0; i < 7; i++){
+        const dia = new Date(monday); dia.setDate(monday.getDate()+i);
+        const diaKey = dia.toISOString().slice(0,10);
+        if(!planoSemanal[diaKey]) planoSemanal[diaKey] = {};
+
+        for (let ref of refeicoes) {
+          const atual = planoSemanal[diaKey][ref];
+          if (!atual || (atual && atual.trim() === '')) {
+            const tipoKey = tipoKeyFromLabel(ref);
+
+            // 1) candidatas por tipo
+            let candidatas = livro.filter(r => r.tipo === tipoKey);
+
+            // 2) aplica regras (base + sazonal)
+            candidatas = applyRulesToCandidates(candidatas, tipoKey, dia, rules);
+
+            // 3) fallback se regras filtrarem tudo
+            const fallback = receitasExemplo.filter(r => r.tipo === tipoKey);
+            const pool = candidatas.length ? candidatas : fallback;
+
+            // 4) escolhe uma
+            const escolhida = pool[Math.floor(Math.random() * pool.length)].titulo;
+
+            planoSemanal[diaKey][ref] = escolhida;
+          }
+        }
+      }
+
+      gravarPlano(planoSemanal);
+      atualizarCalendario();
+    };
+
+
+    // ——— exportar PDF
+    document.getElementById('btnExportar').onclick = () => window.print();
+
+    // ——— gerar lista de compras
+    document.getElementById('btnGerarCompras').onclick = () => {
+      const livro  = lerLivroReceitas();
+      const byName = Object.fromEntries(livro.map(r => [r.titulo, r]));
+      const lista  = lerLista();
+      if (!lista['Outros']) lista['Outros'] = [];
+
+      // helper para normalizar nomes (para deduplicar)
+      const norm = (s) => (s || '')
+        .toLowerCase()
+        .replace(/^[\-\–•\*]\s*/,'')      // tira bullet inicial (- • * …)
+        .replace(/\s{2,}/g,' ')           // colapsa espaços
+        .replace(/[.,;:]\s*$/,'')         // tira pontuação final
+        .trim();
+
+      // 1) limpa itens antigos do plano (mantém manuais)
+      Object.keys(lista).forEach(cat => {
+        lista[cat] = (lista[cat] || []).filter(i => (i.src || 'manual') !== 'plano');
+        if (!lista[cat].length && cat !== 'Outros') delete lista[cat];
+      });
+
+      // 2) agrega ingredientes desta semana
+      const monday = getMonday(dataAtual);
+      for (let i = 0; i < 7; i++) {
+        const dia    = new Date(monday); dia.setDate(monday.getDate() + i);
+        const diaKey = dia.toISOString().slice(0, 10);
+        const obj    = planoSemanal[diaKey] || {};
+
+        for (const ref of refeicoes) {
+          const nome = obj[ref];
+          if (!nome || nome === '__NAO__') continue;
+
+          const rec = byName[nome];
+          if (!rec || !rec.ingredientes) continue;
+
+          rec.ingredientes
+            .split('\n')
+            .map(l => l.trim())
+            .filter(Boolean)
+            .forEach(raw => {
+              const key = norm(raw);
+              if (!key) return;
+
+              // já existe um item vindo do plano com a mesma key?
+              const cat = 'Outros';
+              const ix = lista[cat].findIndex(i => (i.src || 'manual') === 'plano' && i.key === key);
+
+              if (ix === -1) {
+                // guarda o texto legível que apareceu primeiro (sem bullets)
+                const display = raw.replace(/^[\-\–•\*]\s*/,'').trim();
+                lista[cat].push({
+                  nome: display,
+                  key,                             // chave normalizada p/ futuras dedupes
+                  quantidade: '',
+                  comprado: false,
+                  src: 'plano'
+                });
+              }
+              // (opcional) aqui poderias somar quantidades se extraísses números/unidades
+            });
+        }
+      }
+
+      gravarLista(lista);
+
+      if (confirm('Lista de compras gerada a partir do plano desta semana. Queres abrir a Lista de Compras agora?')) {
+        location.href = 'listaCompras.html';
+      }
+    };
+
+
+
+    atualizarCalendario();
+  </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MealMaster - Configurações</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    main{ padding:28px 40px; color:#4e342e }
+    h2{ margin:0 0 18px; font-size:1.9rem; font-weight:800 }
+    .grid{ display:grid; gap:20px; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)) }
+    .card{ background:#fffde7; border-radius:14px; padding:18px 20px; box-shadow:0 4px 12px rgba(0,0,0,.08) }
+    .card h3{ margin:0 0 12px; font-weight:800 }
+    .field{ margin:10px 0 }
+    .field label{ display:block; font-weight:700; margin-bottom:6px }
+    .input, textarea{
+      width:100%; padding:10px 12px; border-radius:10px;
+      border:1.5px solid #ffb74d; background:#fff; color:#4e342e; font-weight:600
+    }
+    textarea{ min-height:70px }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+    .chips{ font-size:.9rem; opacity:.75 }
+    .btn{ border:0; border-radius:26px; padding:10px 16px; font-weight:800; cursor:pointer; background:#ffcc80; color:#4e342e; box-shadow:0 2px 6px rgba(0,0,0,.08) }
+    .btn--brand{ background:linear-gradient(90deg,#4caf50,#81c784); color:#fffde7; box-shadow:0 6px 14px rgba(129,199,132,.45) }
+    .hint{ opacity:.7; font-size:.9rem }
+    .days{ display:grid; grid-template-columns: repeat(3, minmax(120px,1fr)); gap:6px 12px }
+  </style>
+</head>
+<body>
+<header>
+  <h1>MealMaster</h1>
+  <div class="profile-icon" title="Perfil">👤</div>
+</header>
+
+<nav class="sidebar" role="navigation" aria-label="Menu principal">
+  <a href="index.html"     data-route="index.html">Menu Principal</a>
+  <a href="receitas.html"      data-route="receitas.html">Receitas</a>
+  <a href="calendario.html"    data-route="calendario.html">Plano Semanal</a>
+  <a href="listaCompras.html"  data-route="listaCompras.html">Lista de Compras</a>
+  <a href="configuracoes.html" data-route="configuracoes.html">Configurações</a>
+  <a href="perfil.html"        data-route="perfil.html">Perfil</a>
+</nav>
+
+<script>
+  // marca menu ativo
+  (function(){const here=location.pathname.split('/').pop()||'index.html';
+    document.querySelectorAll('.sidebar a').forEach(a=>{
+      if(a.getAttribute('data-route')===here){a.classList.add('active');a.setAttribute('aria-current','page');}
+    });
+  })();
+</script>
+
+<main>
+  <h2>Configurações do Plano</h2>
+
+  <div class="grid">
+    <!-- Regras por refeição -->
+    <section class="card">
+      <h3>Preferências por refeição</h3>
+      <div class="field">
+        <label>Pequeno-almoço — palavras/etiquetas a favorecer</label>
+        <input id="pref_pa" class="input" placeholder="ex: aveia, iogurte, fruta, panqueca">
+      </div>
+      <div class="field">
+        <label>Almoço — palavras/etiquetas a favorecer</label>
+        <input id="pref_alm" class="input" placeholder="ex: salada, massa, arroz">
+      </div>
+      <div class="field">
+        <label>Lanche — palavras/etiquetas a favorecer</label>
+        <input id="pref_lan" class="input" placeholder="ex: tosta, sopa">
+      </div>
+      <div class="field">
+        <label>Jantar — palavras/etiquetas a favorecer</label>
+        <input id="pref_jan" class="input" placeholder="ex: sopa, peixe, salada, grelhado, legumes">
+      </div>
+      <div class="row">
+        <label><input type="checkbox" id="jantar_leve"> Preferir jantares leves</label>
+        <span class="chips">(sopa, peixe, saladas, grelhados, legumes)</span>
+      </div>
+    </section>
+
+    <!-- Sazonalidade -->
+    <section class="card">
+      <h3>Sazonalidade</h3>
+      <div class="field">
+        <label>Verão — favorecer</label>
+        <input id="tag_verao" class="input" placeholder="ex: salada, grelhado, frio, gaspacho">
+      </div>
+      <div class="field">
+        <label>Inverno — favorecer</label>
+        <input id="tag_inverno" class="input" placeholder="ex: sopa, forno, guisado">
+      </div>
+      <div class="hint">O gerador dá preferência a receitas com estas palavras no título ou nas etiquetas.</div>
+    </section>
+
+    <!-- Dias sem carne -->
+    <section class="card">
+      <h3>Dias sem carne</h3>
+      <div class="days">
+        <label><input type="checkbox" class="dia" value="1"> Segunda</label>
+        <label><input type="checkbox" class="dia" value="2"> Terça</label>
+        <label><input type="checkbox" class="dia" value="3"> Quarta</label>
+        <label><input type="checkbox" class="dia" value="4"> Quinta</label>
+        <label><input type="checkbox" class="dia" value="5"> Sexta</label>
+        <label><input type="checkbox" class="dia" value="6"> Sábado</label>
+        <label><input type="checkbox" class="dia" value="0"> Domingo</label>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label><input type="checkbox" id="semcarne_peixe" checked> Permitir peixe nestes dias</label>
+      </div>
+      <div class="hint">Nestes dias o gerador evita carne (“frango”, “bife”, “porco”, “vaca”…). Com a opção acima, pode sugerir peixe.</div>
+    </section>
+
+    <!-- Ações -->
+    <section class="card">
+      <h3>Ações</h3>
+      <div class="row">
+        <button class="btn btn--brand" id="btnGuardar">Guardar</button>
+        <button class="btn" id="btnPadroes">Repor padrões</button>
+      </div>
+      <div class="hint">As regras ficam guardadas no teu navegador e são usadas ao “Completar cardápio semanal”.</div>
+    </section>
+  </div>
+</main>
+
+<script>
+  const LS_RULES = 'mealmaster_regrasPlano';
+
+  const $ = sel => document.querySelector(sel);
+
+  function defaults(){
+    return {
+      meals: {
+        'pequeno-almoco': { prefer:'aveia, iogurte, fruta, panqueca' },
+        'almoco':         { prefer:'salada, massa, arroz' },
+        'lanche':         { prefer:'tosta, sopa' },
+        'jantar':         { prefer:'sopa, peixe, salada, grelhado, legumes', light:true },
+        'ceia':           { prefer:'iogurte, fruta' }
+      },
+      season: {
+        verao:   'salada, grelhado, frio, gaspacho',
+        inverno: 'sopa, forno, guisado'
+      },
+      meatless: { days: [], allowFish: true }
+    };
+  }
+
+  function loadRules(){
+    try{ return JSON.parse(localStorage.getItem(LS_RULES)) || defaults(); }
+    catch{ return defaults(); }
+  }
+  function saveRules(r){ localStorage.setItem(LS_RULES, JSON.stringify(r)); }
+
+  function uiToRules(){
+    const days = Array.from(document.querySelectorAll('.dia:checked')).map(i=>parseInt(i.value,10));
+    return {
+      meals: {
+        'pequeno-almoco': { prefer: $('#pref_pa').value },
+        'almoco':         { prefer: $('#pref_alm').value },
+        'lanche':         { prefer: $('#pref_lan').value },
+        'jantar':         { prefer: $('#pref_jan').value, light: $('#jantar_leve').checked },
+        'ceia':           { prefer: '' }
+      },
+      season: {
+        verao: $('#tag_verao').value,
+        inverno: $('#tag_inverno').value
+      },
+      meatless: { days, allowFish: $('#semcarne_peixe').checked }
+    };
+  }
+
+  function rulesToUI(r){
+    $('#pref_pa').value  = r.meals['pequeno-almoco'].prefer || '';
+    $('#pref_alm').value = r.meals['almoco'].prefer || '';
+    $('#pref_lan').value = r.meals['lanche'].prefer || '';
+    $('#pref_jan').value = r.meals['jantar'].prefer || '';
+    $('#jantar_leve').checked = !!r.meals['jantar'].light;
+    $('#tag_verao').value   = r.season.verao || '';
+    $('#tag_inverno').value = r.season.inverno || '';
+    document.querySelectorAll('.dia').forEach(i=>{
+      i.checked = (r.meatless.days||[]).includes(parseInt(i.value,10));
+    });
+    $('#semcarne_peixe').checked = !!r.meatless.allowFish;
+  }
+
+  // init
+  (function(){
+    rulesToUI(loadRules());
+  })();
+
+  $('#btnGuardar').addEventListener('click', ()=>{
+    saveRules(uiToRules());
+    alert('Regras guardadas!');
+  });
+  $('#btnPadroes').addEventListener('click', ()=>{
+    const r = defaults(); saveRules(r); rulesToUI(r);
+  });
+</script>
+</body>
+</html>
