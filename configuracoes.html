@@ -13,7 +13,7 @@
     .card h3{ margin:0 0 12px; font-weight:800 }
     .field{ margin:10px 0 }
     .field label{ display:block; font-weight:700; margin-bottom:6px }
-    .input, textarea{
+    .input, textarea, select{
       width:100%; padding:10px 12px; border-radius:10px;
       border:1.5px solid #ffb74d; background:#fff; color:#4e342e; font-weight:600
     }
@@ -23,27 +23,29 @@
     .btn{ border:0; border-radius:26px; padding:10px 16px; font-weight:800; cursor:pointer; background:#ffcc80; color:#4e342e; box-shadow:0 2px 6px rgba(0,0,0,.08) }
     .btn--brand{ background:linear-gradient(90deg,#4caf50,#81c784); color:#fffde7; box-shadow:0 6px 14px rgba(129,199,132,.45) }
     .hint{ opacity:.7; font-size:.9rem }
-    .days{ display:grid; grid-template-columns: repeat(3, minmax(120px,1fr)); gap:6px 12px }
+    table{ width:100%; border-collapse:collapse }
+    th, td{ padding:8px; border-bottom:1px dashed #ffcc80; text-align:left }
+    th{ font-weight:800 }
+    .num{ width:90px; text-align:center }
   </style>
 </head>
 <body>
 <header>
   <h1>MealMaster</h1>
-  <div class="profile-icon" title="Perfil">👤</div>
+  <a href="perfil.html" class="profile-icon" title="Abrir perfil" aria-label="Abrir perfil">👤</a>
 </header>
 
 <nav class="sidebar" role="navigation" aria-label="Menu principal">
-  <a href="index.html"     data-route="index.html">Menu Principal</a>
-  <a href="receitas.html"      data-route="receitas.html">Receitas</a>
-  <a href="calendario.html"    data-route="calendario.html">Plano Semanal</a>
-  <a href="listaCompras.html"  data-route="listaCompras.html">Lista de Compras</a>
+  <a href="index.html" data-route="index.html">Menu Principal</a>
+  <a href="receitas.html" data-route="receitas.html">Receitas</a>
+  <a href="calendario.html" data-route="calendario.html">Plano Semanal</a>
+  <a href="listaCompras.html" data-route="listaCompras.html">Lista de Compras</a>
   <a href="configuracoes.html" data-route="configuracoes.html">Configurações</a>
-  <a href="perfil.html"        data-route="perfil.html">Perfil</a>
 </nav>
 
 <script>
-  // marca menu ativo
-  (function(){const here=location.pathname.split('/').pop()||'index.html';
+  (function(){
+    const here=location.pathname.split('/').pop()||'index.html';
     document.querySelectorAll('.sidebar a').forEach(a=>{
       if(a.getAttribute('data-route')===here){a.classList.add('active');a.setAttribute('aria-current','page');}
     });
@@ -54,23 +56,57 @@
   <h2>Configurações do Plano</h2>
 
   <div class="grid">
-    <!-- Regras por refeição -->
+    <!-- Rotação e Início da Semana -->
+    <section class="card">
+      <h3>Geral</h3>
+      <div class="field">
+        <label for="rotation">Rotação (não repetir por … dias)</label>
+        <input id="rotation" class="input num" type="number" min="0" max="60" step="1" placeholder="ex: 14">
+      </div>
+
+      <div class="field">
+        <label>Primeiro dia da semana</label>
+        <div class="row">
+          <label><input type="radio" name="weekStart" value="mon"> Segunda</label>
+          <label><input type="radio" name="weekStart" value="sun"> Domingo</label>
+        </div>
+        <div class="hint">Afeta a navegação no Calendário e a geração/print da semana visível.</div>
+      </div>
+    </section>
+
+    <!-- Limites semanais -->
+    <section class="card">
+      <h3>Limites por semana</h3>
+      <div class="hint">Define mínimos/máximos por grupo. Os grupos são inferidos por palavras no título/etiquetas (ex.: “massa”, “peixe”, “carne”, “sopa”, “salada”).</div>
+      <table>
+        <thead><tr><th>Grupo</th><th>Mín.</th><th>Máx.</th></tr></thead>
+        <tbody>
+          <tr><td>Massa</td> <td><input id="min_massa" class="input num" type="number" min="0" max="7"></td> <td><input id="max_massa" class="input num" type="number" min="0" max="7"></td></tr>
+          <tr><td>Peixe</td> <td><input id="min_peixe" class="input num" type="number" min="0" max="7"></td> <td><input id="max_peixe" class="input num" type="number" min="0" max="7"></td></tr>
+          <tr><td>Carne</td> <td><input id="min_carne" class="input num" type="number" min="0" max="7"></td> <td><input id="max_carne" class="input num" type="number" min="0" max="7"></td></tr>
+          <tr><td>Sopa</td>  <td><input id="min_sopa"  class="input num" type="number" min="0" max="7"></td> <td><input id="max_sopa"  class="input num" type="number" min="0" max="7"></td></tr>
+          <tr><td>Salada</td><td><input id="min_salada"class="input num" type="number" min="0" max="7"></td> <td><input id="max_salada"class="input num" type="number" min="0" max="7"></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Preferências por refeição (mantidas) -->
     <section class="card">
       <h3>Preferências por refeição</h3>
       <div class="field">
-        <label>Pequeno-almoço — palavras/etiquetas a favorecer</label>
+        <label>Pequeno-almoço — favorecer</label>
         <input id="pref_pa" class="input" placeholder="ex: aveia, iogurte, fruta, panqueca">
       </div>
       <div class="field">
-        <label>Almoço — palavras/etiquetas a favorecer</label>
+        <label>Almoço — favorecer</label>
         <input id="pref_alm" class="input" placeholder="ex: salada, massa, arroz">
       </div>
       <div class="field">
-        <label>Lanche — palavras/etiquetas a favorecer</label>
+        <label>Lanche — favorecer</label>
         <input id="pref_lan" class="input" placeholder="ex: tosta, sopa">
       </div>
       <div class="field">
-        <label>Jantar — palavras/etiquetas a favorecer</label>
+        <label>Jantar — favorecer</label>
         <input id="pref_jan" class="input" placeholder="ex: sopa, peixe, salada, grelhado, legumes">
       </div>
       <div class="row">
@@ -79,24 +115,10 @@
       </div>
     </section>
 
-    <!-- Sazonalidade -->
-    <section class="card">
-      <h3>Sazonalidade</h3>
-      <div class="field">
-        <label>Verão — favorecer</label>
-        <input id="tag_verao" class="input" placeholder="ex: salada, grelhado, frio, gaspacho">
-      </div>
-      <div class="field">
-        <label>Inverno — favorecer</label>
-        <input id="tag_inverno" class="input" placeholder="ex: sopa, forno, guisado">
-      </div>
-      <div class="hint">O gerador dá preferência a receitas com estas palavras no título ou nas etiquetas.</div>
-    </section>
-
     <!-- Dias sem carne -->
     <section class="card">
       <h3>Dias sem carne</h3>
-      <div class="days">
+      <div class="row" style="flex-wrap:wrap">
         <label><input type="checkbox" class="dia" value="1"> Segunda</label>
         <label><input type="checkbox" class="dia" value="2"> Terça</label>
         <label><input type="checkbox" class="dia" value="3"> Quarta</label>
@@ -104,11 +126,8 @@
         <label><input type="checkbox" class="dia" value="5"> Sexta</label>
         <label><input type="checkbox" class="dia" value="6"> Sábado</label>
         <label><input type="checkbox" class="dia" value="0"> Domingo</label>
+        <label style="margin-left:12px"><input type="checkbox" id="semcarne_peixe" checked> Permitir peixe</label>
       </div>
-      <div class="row" style="margin-top:8px">
-        <label><input type="checkbox" id="semcarne_peixe" checked> Permitir peixe nestes dias</label>
-      </div>
-      <div class="hint">Nestes dias o gerador evita carne (“frango”, “bife”, “porco”, “vaca”…). Com a opção acima, pode sugerir peixe.</div>
     </section>
 
     <!-- Ações -->
@@ -118,7 +137,7 @@
         <button class="btn btn--brand" id="btnGuardar">Guardar</button>
         <button class="btn" id="btnPadroes">Repor padrões</button>
       </div>
-      <div class="hint">As regras ficam guardadas no teu navegador e são usadas ao “Completar cardápio semanal”.</div>
+      <div class="hint">Estas regras são usadas ao “Completar cardápio semanal”.</div>
     </section>
   </div>
 </main>
@@ -127,9 +146,19 @@
   const LS_RULES = 'mealmaster_regrasPlano';
 
   const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
 
   function defaults(){
     return {
+      rotationDays: 14,
+      weekStart: 'mon', // 'mon' ou 'sun'
+      limits: {
+        massa:  {min:0, max:2},
+        peixe:  {min:1, max:7},
+        carne:  {min:0, max:4},
+        sopa:   {min:0, max:7},
+        salada: {min:0, max:7}
+      },
       meals: {
         'pequeno-almoco': { prefer:'aveia, iogurte, fruta, panqueca' },
         'almoco':         { prefer:'salada, massa, arroz' },
@@ -137,23 +166,50 @@
         'jantar':         { prefer:'sopa, peixe, salada, grelhado, legumes', light:true },
         'ceia':           { prefer:'iogurte, fruta' }
       },
-      season: {
-        verao:   'salada, grelhado, frio, gaspacho',
-        inverno: 'sopa, forno, guisado'
-      },
-      meatless: { days: [], allowFish: true }
+      season: { verao:'salada, grelhado, frio, gaspacho', inverno:'sopa, forno, guisado' },
+      meatless: { days:[], allowFish:true }
     };
   }
 
-  function loadRules(){
-    try{ return JSON.parse(localStorage.getItem(LS_RULES)) || defaults(); }
-    catch{ return defaults(); }
-  }
+  function loadRules(){ try{ return JSON.parse(localStorage.getItem(LS_RULES)) || defaults(); }catch{ return defaults(); } }
   function saveRules(r){ localStorage.setItem(LS_RULES, JSON.stringify(r)); }
 
+  function rulesToUI(r){
+    $('#rotation').value = r.rotationDays ?? 14;
+    $$('input[name="weekStart"]').forEach(rb => rb.checked = (rb.value === (r.weekStart||'mon')));
+
+    // limits
+    const setLM = (key, field, val)=>{ const el = $(`#${field}_${key}`); if(el) el.value = (r.limits?.[key]?.[field.replace(/^(min_|max_)/,'')] ?? 0); };
+    ['massa','peixe','carne','sopa','salada'].forEach(k=>{
+      $(`#min_${k}`).value = r.limits?.[k]?.min ?? 0;
+      $(`#max_${k}`).value = r.limits?.[k]?.max ?? 7;
+    });
+
+    $('#pref_pa').value  = r.meals['pequeno-almoco'].prefer || '';
+    $('#pref_alm').value = r.meals['almoco'].prefer || '';
+    $('#pref_lan').value = r.meals['lanche'].prefer || '';
+    $('#pref_jan').value = r.meals['jantar'].prefer || '';
+    $('#jantar_leve').checked = !!r.meals['jantar'].light;
+
+    $$('.dia').forEach(i=> i.checked = (r.meatless.days||[]).includes(parseInt(i.value,10)));
+    $('#semcarne_peixe').checked = !!r.meatless.allowFish;
+  }
+
   function uiToRules(){
-    const days = Array.from(document.querySelectorAll('.dia:checked')).map(i=>parseInt(i.value,10));
+    const r = loadRules();
+    const weekStart = ($$('input[name="weekStart"]').find(rb=>rb.checked)?.value) || 'mon';
+    const limits = {};
+    ['massa','peixe','carne','sopa','salada'].forEach(k=>{
+      limits[k] = {
+        min: Math.max(0, parseInt($(`#min_${k}`).value||'0',10)),
+        max: Math.max(0, parseInt($(`#max_${k}`).value||'0',10))
+      };
+    });
+
     return {
+      rotationDays: Math.max(0, parseInt($('#rotation').value||'14',10)),
+      weekStart,
+      limits,
       meals: {
         'pequeno-almoco': { prefer: $('#pref_pa').value },
         'almoco':         { prefer: $('#pref_alm').value },
@@ -161,32 +217,12 @@
         'jantar':         { prefer: $('#pref_jan').value, light: $('#jantar_leve').checked },
         'ceia':           { prefer: '' }
       },
-      season: {
-        verao: $('#tag_verao').value,
-        inverno: $('#tag_inverno').value
-      },
-      meatless: { days, allowFish: $('#semcarne_peixe').checked }
+      season: { verao: $('#tag_verao')?.value || (r.season?.verao||''), inverno: $('#tag_inverno')?.value || (r.season?.inverno||'') },
+      meatless: { days: $$('.dia:checked').map(i=>parseInt(i.value,10)), allowFish: $('#semcarne_peixe').checked }
     };
   }
 
-  function rulesToUI(r){
-    $('#pref_pa').value  = r.meals['pequeno-almoco'].prefer || '';
-    $('#pref_alm').value = r.meals['almoco'].prefer || '';
-    $('#pref_lan').value = r.meals['lanche'].prefer || '';
-    $('#pref_jan').value = r.meals['jantar'].prefer || '';
-    $('#jantar_leve').checked = !!r.meals['jantar'].light;
-    $('#tag_verao').value   = r.season.verao || '';
-    $('#tag_inverno').value = r.season.inverno || '';
-    document.querySelectorAll('.dia').forEach(i=>{
-      i.checked = (r.meatless.days||[]).includes(parseInt(i.value,10));
-    });
-    $('#semcarne_peixe').checked = !!r.meatless.allowFish;
-  }
-
-  // init
-  (function(){
-    rulesToUI(loadRules());
-  })();
+  (function(){ rulesToUI(loadRules()); })();
 
   $('#btnGuardar').addEventListener('click', ()=>{
     saveRules(uiToRules());
@@ -194,6 +230,15 @@
   });
   $('#btnPadroes').addEventListener('click', ()=>{
     const r = defaults(); saveRules(r); rulesToUI(r);
+  });
+</script>
+
+<!-- opcional: repor receitas de exemplo -->
+<button id="btn-reseed" class="btn">Repor receitas de exemplo</button>
+<script>
+  document.getElementById('btn-reseed').addEventListener('click', ()=>{
+    if(!confirm('Apagar o teu livro atual e repor exemplos?')) return;
+    localStorage.removeItem('mealmaster_receitas'); location.reload();
   });
 </script>
 </body>

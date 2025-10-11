@@ -6,6 +6,8 @@
   <title>Receitas - MealMaster</title>
 
   <link rel="stylesheet" href="style.css" />
+  <script src="seed.js" defer></script>
+
 
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#fffde7; color:#4e342e; margin:0; }
@@ -64,7 +66,7 @@
   <!-- Cabeçalho padrão -->
   <header>
     <h1>MealMaster</h1>
-    <div class="profile-icon" title="Perfil">👤</div>
+    <a href="perfil.html" class="profile-icon" title="Abrir perfil" aria-label="Abrir perfil">👤</a>
   </header>
 
   <!-- MENU padronizado (todos em minúsculas) -->
@@ -74,7 +76,6 @@
     <a href="calendario.html"    data-route="calendario.html">Plano Semanal</a>
     <a href="listaCompras.html"  data-route="listaCompras.html">Lista de Compras</a>
     <a href="configuracoes.html" data-route="configuracoes.html">Configurações</a>
-    <a href="perfil.html"        data-route="perfil.html">Perfil</a>
   </nav>
 
   <script>
@@ -244,10 +245,8 @@
     }
 
     // ================== obter base de dados ==================
-    function obterReceitas() {
-      const livro = lerLivro();
-      return livro.length ? livro : exemplos;
-    }
+    function obterReceitas(){ return lerLivro(); }
+
 
     // ================== render grid ==================
     function filtrarReceitas() {

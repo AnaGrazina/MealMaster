@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MealMaster</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="seed.js" defer></script>
   <meta name="theme-color" content="#4caf50" />
 </head>
 <body>
   <!-- Cabeçalho padrão -->
   <header>
     <h1>MealMaster</h1>
-    <div class="profile-icon" title="Perfil">👤</div>
+    <a href="perfil.html" class="profile-icon" title="Abrir perfil" aria-label="Abrir perfil">👤</a>
   </header>
 
   <!-- MENU (rotas em minúsculas) -->
@@ -19,9 +20,8 @@
     <a href="index.html"       data-route="index.html">Menu Principal</a>
     <a href="receitas.html"    data-route="receitas.html">Receitas</a>
     <a href="calendario.html"  data-route="calendario.html">Plano Semanal</a>
-    <a href="listaCompras.html"data-route="listaCompras.html">Lista de Compras</a>
+    <a href="listaCompras.html" data-route="listaCompras.html">Lista de Compras</a>
     <a href="configuracoes.html" data-route="configuracoes.html">Configurações</a>
-    <a href="perfil.html"      data-route="perfil.html">Perfil</a>
   </nav>
 
   <!-- marca o link ativo no menu -->
@@ -55,7 +55,7 @@
       <a class="btn btn--big" href="calendario.html">Abrir plano semanal</a>
       <a class="btn btn--big" href="listaCompras.html">
         Lista de compras
-        <span id="badge-compras" class="pill" aria-label="Itens por comprar"></span>
+        <span id="badge-compras" class="pill" aria-label="Itens por comprar" aria-live="polite"></span>
       </a>
     </section>
 
@@ -88,7 +88,7 @@
   <!-- Estilos rápidos do dashboard (podes mover para style.css) -->
   <style>
     #dashboard{
-      margin:24px 40px;     /* ocupa a largura útil como nas outras páginas */
+      margin:24px 40px;
       padding:0 0 40px;
     }
     .dash-top{display:flex;gap:16px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:16px}
@@ -104,7 +104,8 @@
     .shortcuts{display:flex;gap:12px;flex-wrap:wrap}
     .rod-header,.tp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
     .recent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-    .recent-item{display:flex;gap:10px;align-items:center;background:#fffde7;border:1px solid #ffcc80;border-radius:10px;padding:10px}
+    .recent-item{display:flex;gap:10px;align-items:center;background:#fffde7;border:1px solid #ffcc80;border-radius:10px;padding:10px;cursor:pointer}
+    .recent-item:focus{outline:3px solid #4caf50; outline-offset:2px}
     .recent-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover}
     .link{display:inline-block;margin-top:10px;font-weight:700;text-decoration:none;color:#4e342e}
     .tp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
@@ -124,29 +125,33 @@
 
     const FALLBACK_IMG = 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=400&q=60';
 
-    // Receitas de fallback (quando ainda não existem no localStorage)
-    const exemplos = [
-      {id:1,titulo:'Panquecas de Aveia', img:'https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=300&q=60'},
-      {id:2,titulo:'Salada de Grão',     img:'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=60'},
-      {id:3,titulo:'Sopa de Abóbora',    img:'https://images.unsplash.com/photo-1543352634-02fcb9db8f1e?auto=format&fit=crop&w=300&q=60'},
-      {id:4,titulo:'Tosta de Abacate',   img:'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=300&q=60'},
-      {id:5,titulo:'Bife com Legumes',   img:'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=300&q=60'}
-    ];
-
     function lerLivro(){
       try{
         const raw = localStorage.getItem(LS_REC);
         const arr = raw ? JSON.parse(raw) : null;
         if (Array.isArray(arr) && arr.length) return arr;
       }catch{}
-      return exemplos;
+      return [];
     }
     function lerPlano(){
       try{ return JSON.parse(localStorage.getItem(LS_PLANO)) || {}; }catch{ return {}; }
     }
+
+    /* === NOVO: lista plana + migração do formato antigo === */
     function lerLista(){
-      try{ return JSON.parse(localStorage.getItem(LS_LISTA)) || {}; }catch{ return {}; }
+      try{
+        const raw = localStorage.getItem(LS_LISTA);
+        const data = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(data)) return data;                 // formato novo (array)
+        if (data && typeof data === 'object') {               // migração do antigo (por categorias)
+          return Object.values(data).flat().map(i => ({
+            nome: i.nome || '', quantidade: i.quantidade || '', comprado: !!i.comprado
+          }));
+        }
+      }catch{}
+      return [];
     }
+
     function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
     // Link de detalhe: se tiver id, vai direto a receita.html?id=…; senão, abre receitas com query
@@ -170,13 +175,10 @@
       dl.innerHTML = titulos.slice(-30).reverse().map(t=>`<option value="${t}">`).join('');
     })();
 
-    // ---- Badge com itens por comprar
+    // ---- Badge com itens por comprar (usa lista plana)
     (function renderBadge(){
-      const lista = lerLista();
-      let pendentes = 0;
-      Object.values(lista).forEach(arr => {
-        (arr||[]).forEach(i => { if(!i.comprado) pendentes++; });
-      });
+      const lista = lerLista(); // array [{nome, quantidade, comprado}]
+      const pendentes = lista.filter(i => !i.comprado).length;
       const badge = document.getElementById('badge-compras');
       badge.textContent = pendentes ? pendentes : '';
       badge.style.display = pendentes ? 'inline-block' : 'none';
@@ -241,10 +243,16 @@
       }
     }
 
-    // ---- Receita do dia
+    // ---- Receita do dia (robusta quando não há receitas)
     function renderRod(){
-      const r = pickRandom(lerLivro());
+      const livro = lerLivro();
       const el = document.getElementById('rod-conteudo');
+
+      if (!livro.length){
+        el.innerHTML = `<p class="empty">Sem receitas ainda. <a class="link" href="receitas.html">Adicionar a primeira</a></p>`;
+        return;
+      }
+      const r = pickRandom(livro);
       el.innerHTML = `
         <div style="display:flex; gap:12px; align-items:center;">
           <img src="${r.img||FALLBACK_IMG}" alt="Imagem de ${r.titulo}" class="thumb">
@@ -256,7 +264,7 @@
     }
     document.getElementById('btn-surpreende').addEventListener('click', renderRod);
 
-    // ---- Recentes (últimas 4 do “livro” como proxy)
+    // ---- Recentes (últimas 4 do “livro”)
     function renderRecentes(){
       const livro = lerLivro().slice(-4).reverse();
       const box = document.getElementById('recent-grid');
@@ -266,15 +274,24 @@
         return;
       }
 
-      box.innerHTML = livro.map(r=>`
-        <article class="recent-item">
+      box.innerHTML = '';
+      livro.forEach(r=>{
+        const card = document.createElement('article');
+        card.className = 'recent-item';
+        card.innerHTML = `
           <img class="recent-thumb" src="${r.img||FALLBACK_IMG}" alt="Imagem de ${r.titulo}">
           <div>
             <div style="font-weight:800">${r.titulo}</div>
-            <a class="link" href="${recipeLink(r)}" aria-label="Abrir receita ${r.titulo}">Abrir</a>
+            <span class="link" aria-hidden="true">Abrir</span>
           </div>
-        </article>
-      `).join('');
+        `;
+        const go = () => location.href = recipeLink(r);
+        card.setAttribute('role','button');
+        card.tabIndex = 0;
+        card.addEventListener('click', go);
+        card.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); go(); }});
+        box.appendChild(card);
+      });
     }
 
     // init

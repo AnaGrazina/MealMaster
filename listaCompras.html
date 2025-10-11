@@ -6,26 +6,23 @@
   <title>MealMaster - Lista de Compras</title>
   <link rel="stylesheet" href="style.css" />
   <style>
+    /* ===== Ecrã ===== */
     main { padding:30px 40px; color:#4e342e; }
     h2 { margin:0 0 16px; font-weight:800; font-size:1.9rem; }
     .toolbar { display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 22px; align-items:flex-end }
     .field { display:flex; flex-direction:column; gap:6px }
-    .field input, .field select { padding:8px 10px; border-radius:10px; border:1.5px solid #ffb74d; background:#fffde7; font-weight:600; color:#4e342e }
+    .field input{ padding:8px 10px; border-radius:10px; border:1.5px solid #ffb74d; background:#fffde7; font-weight:600; color:#4e342e }
     .btn{border:0;border-radius:28px;padding:10px 16px;font-weight:800;cursor:pointer;background:#ffcc80;color:#4e342e;box-shadow:0 2px 6px rgba(0,0,0,.08)}
     .btn--brand{background:linear-gradient(90deg,#4caf50,#81c784); color:#fffde7; box-shadow:0 6px 14px rgba(129,199,132,.45)}
     .btn--ghost{background:#fffde7;border:1.5px solid #ffb74d}
     .btn--danger{background:#e57373;color:#fff}
 
-    .categoria { margin-bottom:35px; }
-    .categoria h3 { background:#ffb347; color:#4e342e; padding:10px 20px; border-radius:10px; font-weight:800; box-shadow:1px 2px 6px rgba(255,179,71,.5); user-select:none; }
-    ul.lista-ingredientes { list-style:none; margin-top:10px; }
-
-    ul.lista-ingredientes li {
+    ul.lista { list-style:none; margin-top:10px; }
+    ul.lista li {
       background:#fff3e0; margin-bottom:12px; padding:12px 15px; border-radius:12px;
-      display:flex; align-items:center; gap:12px; box-shadow:0 1px 3px rgba(255,183,77,.4); transition:background .25s
+      display:flex; align-items:center; gap:12px; box-shadow:0 1px 3px rgba(255,183,77,.4)
     }
-    ul.lista-ingredientes li:hover { background:#ffe0b2; }
-    ul.lista-ingredientes li.comprado { background:#c8e6c9; text-decoration:line-through; color:#4e342e99; }
+    ul.lista li.comprado { background:#c8e6c9; text-decoration:line-through; color:#4e342e99; }
 
     .checkbox-container{position:relative;width:22px;height:22px;flex-shrink:0}
     .checkbox-container input{width:22px;height:22px;opacity:0;position:absolute;top:0;left:0;z-index:2;cursor:pointer}
@@ -36,38 +33,53 @@
       background-repeat:no-repeat;background-position:center;background-size:16px 16px;
     }
 
-    .nome-ingrediente{ flex:1; font-weight:700; user-select:none }
-    .quantidade-input{ width:80px; padding:6px 8px; border:1.5px solid #ffb74d; border-radius:8px; text-align:center; color:#4e342e; font-weight:600; background:#fffde7 }
-    .cat-select{ padding:6px 8px; border:1.5px solid #ffb74d; border-radius:8px; background:#fffde7; font-weight:600 }
+    .nome{ flex:1; font-weight:700; }
+    .qtd{ width:90px; padding:6px 8px; border:1.5px solid #ffb74d; border-radius:8px; text-align:center; color:#4e342e; font-weight:600; background:#fffde7 }
     .btn-eliminar{ background:#e57373; border:0; border-radius:8px; padding:6px 10px; color:#fff; font-weight:800; cursor:pointer; box-shadow:0 2px 5px rgba(229,115,115,.7) }
     .empty{ opacity:.7; font-style:italic; margin-top:12px }
 
-    /* Print */
-    @media print{
-      header, nav.sidebar, .toolbar, #btn-partilhar { display:none !important; }
-      main{ padding:0 }
-      .categoria h3{ box-shadow:none }
-      ul.lista-ingredientes li{ box-shadow:none }
+    /* ===== PRINT: checkbox vazia + nome + quantidade ===== */
+    @page { size: A4 portrait; margin: 14mm; }
+    @media print {
+      html, body { background:#fff !important; color:#000 !important; }
+      header, nav.sidebar, .toolbar, #btn-partilhar, .btn, .btn-eliminar { display:none !important; }
+      main { padding:0 !important; margin:0 !important; }
+      h2 { margin:0 0 6mm 0 !important; text-align:center; font-size:16pt !important; font-weight:700 !important; color:#000 !important; }
+
+      ul.lista { margin: 0 !important; padding: 0 !important; }
+      ul.lista li {
+        break-inside: avoid; page-break-inside: avoid;
+        background: transparent !important; box-shadow:none !important; border:0 !important; border-radius:0 !important;
+        margin: 0 0 3.2mm 0 !important; padding: 0 !important;
+        display: grid !important; grid-template-columns: 5mm 1fr auto; align-items: center; gap: 4mm !important;
+      }
+      ul.lista li::before { content:""; width:4.2mm; height:4.2mm; border:1px solid #000; display:inline-block; }
+      .checkbox-container { display:none !important; }
+      .nome { font-weight:600 !important; color:#000 !important; }
+      .qtd {
+        font: inherit !important; color:#000 !important; background: transparent !important;
+        border:0 !important; box-shadow:none !important; padding:0 !important;
+        width:auto !important; min-width:16mm !important; text-align:right !important;
+      }
+      ul.lista li.comprado { text-decoration:none !important; color:#000 !important; }
     }
   </style>
 </head>
 <body>
   <header>
     <h1>MealMaster</h1>
-    <div class="profile-icon" title="Perfil">👤</div>
+    <a href="perfil.html" class="profile-icon" title="Abrir perfil" aria-label="Abrir perfil">👤</a>
   </header>
 
   <nav class="sidebar" role="navigation" aria-label="Menu principal">
-    <a href="index.html"     data-route="index.html">Menu Principal</a>
-    <a href="receitas.html"      data-route="receitas.html">Receitas</a>
-    <a href="calendario.html"    data-route="calendario.html">Plano Semanal</a>
-    <a href="listaCompras.html"  data-route="listaCompras.html">Lista de Compras</a>
+    <a href="index.html" data-route="index.html">Menu Principal</a>
+    <a href="receitas.html" data-route="receitas.html">Receitas</a>
+    <a href="calendario.html" data-route="calendario.html">Plano Semanal</a>
+    <a href="listaCompras.html" data-route="listaCompras.html">Lista de Compras</a>
     <a href="configuracoes.html" data-route="configuracoes.html">Configurações</a>
-    <a href="perfil.html"        data-route="perfil.html">Perfil</a>
   </nav>
 
   <script>
-    // marca menu ativo
     (function () {
       const here = location.pathname.split('/').pop() || 'index.html';
       document.querySelectorAll('.sidebar a').forEach(a => {
@@ -81,7 +93,7 @@
   <main>
     <h2>Lista de Compras</h2>
 
-    <!-- Toolbar -->
+    <!-- Toolbar simples -->
     <div class="toolbar">
       <div class="field">
         <label for="novoNome">Item</label>
@@ -91,255 +103,144 @@
         <label for="novoQt">Qtd.</label>
         <input id="novoQt" type="text" placeholder="ex: 3 un" />
       </div>
-      <div class="field">
-        <label for="novoCat">Categoria</label>
-        <select id="novoCat">
-          <option>Outros</option>
-          <option>Legumes</option>
-          <option>Laticínios</option>
-          <option>Carnes</option>
-          <option>Peixaria</option>
-          <option>Mercearia</option>
-          <option>Congelados</option>
-          <option>Padaria</option>
-          <option>Bebidas</option>
-          <option>Higiene</option>
-        </select>
-      </div>
       <button class="btn btn--brand" id="btn-add">Adicionar</button>
       <button class="btn btn--ghost" id="btn-clear-done">Limpar comprados</button>
       <button class="btn btn--ghost" id="btn-print">Exportar (PDF)</button>
       <button class="btn btn--danger" id="btn-reset">Apagar tudo</button>
     </div>
 
-    <div id="lista-compras-container"></div>
+    <ul id="lista" class="lista"></ul>
 
     <button class="btn btn--brand" id="btn-partilhar">Partilhar Lista via WhatsApp</button>
   </main>
 
   <script>
     const LS_LISTA = 'mealmaster_listaCompras';
-    // === memória de categorias (nome → categoria) ===
-    const LS_CATMAP = 'mealmaster_categoriaPorIngrediente';
-    const normName = s => (s || '').toLowerCase().trim();
 
-    function loadCatMap(){
-      try { return JSON.parse(localStorage.getItem(LS_CATMAP)) || {}; }
-      catch { return {}; }
-    }
-    function saveCatMap(map){
-      localStorage.setItem(LS_CATMAP, JSON.stringify(map));
-    }
-    function rememberCategory(name, cat){
-      const map = loadCatMap();
-      map[normName(name)] = cat;
-      saveCatMap(map);
-    }
-
-    
-    
+    // Lê e migra dados antigos (objeto por categorias) -> array plano
     function loadList(){
       try{
         const raw = localStorage.getItem(LS_LISTA);
-        const obj = raw ? JSON.parse(raw) : {};
-        if(!obj['Outros']) obj['Outros'] = [];
-        return obj;
-      }catch{ return { 'Outros': [] }; }
+        if(!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+        // formato antigo (objeto de categorias)
+        if (parsed && typeof parsed === 'object') {
+          const flat = [];
+          Object.values(parsed).forEach(arr => {
+            (arr||[]).forEach(i => {
+              flat.push({ nome: i.nome || '', quantidade: i.quantidade || '', comprado: !!i.comprado });
+            });
+          });
+          localStorage.setItem(LS_LISTA, JSON.stringify(flat));
+          return flat;
+        }
+      }catch{}
+      return [];
     }
-    function saveList(o){ localStorage.setItem(LS_LISTA, JSON.stringify(o)); }
+    function saveList(arr){ localStorage.setItem(LS_LISTA, JSON.stringify(arr)); }
 
-    let listaCompras = loadList();
+    let itens = loadList();
 
-    const container = document.getElementById('lista-compras-container');
+    const ul = document.getElementById('lista');
     const novoNome = document.getElementById('novoNome');
     const novoQt   = document.getElementById('novoQt');
-    const novoCat  = document.getElementById('novoCat');
 
-    function normCat(s){ return s && s.trim() ? s.trim() : 'Outros'; }
-
-    function ensureCategory(cat){
-      cat = normCat(cat);
-      if(!listaCompras[cat]) listaCompras[cat] = [];
-      return cat;
-    }
-
-    function addItem(nome, quantidade, categoria){
-      nome = (nome||'').trim();
-      if(!nome) return;
-      const cat = ensureCategory(categoria);
-      rememberCategory(nome, cat); // aprende esta categoria para próximas vezes
-      // tentar fundir com item igual (case-insensitive)
-      const ix = listaCompras[cat].findIndex(i => i.nome.toLowerCase() === nome.toLowerCase());
-      if(ix >= 0){
-        // se já existe, apenas atualiza quantidade (concatena se já houver)
-        const cur = listaCompras[cat][ix];
-        if(quantidade){
-          cur.quantidade = cur.quantidade ? `${cur.quantidade} + ${quantidade}` : quantidade;
-        }
-      }else{
-        listaCompras[cat].push({ nome, quantidade: quantidade||'', comprado:false });
-      }
-      saveList(listaCompras);
-      renderLista();
-    }
-
-    function moveItem(fromCat, idx, toCat){
-      toCat = ensureCategory(toCat);
-      const [item] = listaCompras[fromCat].splice(idx,1);
-      listaCompras[toCat].push(item);
-      saveList(listaCompras);
-      renderLista();
-    }
-
-    function criarItemCategoria(categoria, itens) {
-      const divCat = document.createElement('div');
-      divCat.className = 'categoria';
-
-      const h3 = document.createElement('h3');
-      h3.textContent = categoria;
-      divCat.appendChild(h3);
-
-      const ul = document.createElement('ul');
-      ul.className = 'lista-ingredientes';
-
+    function render(){
+      ul.innerHTML = '';
       if(!itens.length){
-        const p = document.createElement('p');
-        p.className = 'empty';
-        p.textContent = 'Sem itens nesta categoria.';
-        divCat.appendChild(p);
+        const li = document.createElement('li');
+        li.className = 'empty';
+        li.textContent = 'A lista está vazia. Adiciona itens acima ou gera a partir do Plano Semanal.';
+        ul.appendChild(li);
+        return;
       }
-
       itens.forEach((item, idx) => {
         const li = document.createElement('li');
         if(item.comprado) li.classList.add('comprado');
 
-        // checkbox
-        const checkboxCont = document.createElement('label');
-        checkboxCont.className = 'checkbox-container';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = item.comprado;
-        checkbox.addEventListener('change', () => {
-          item.comprado = checkbox.checked;
+        // checkbox (ecrã)
+        const chkWrap = document.createElement('label');
+        chkWrap.className = 'checkbox-container';
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = item.comprado;
+        chk.addEventListener('change', ()=>{
+          item.comprado = chk.checked;
           li.classList.toggle('comprado', item.comprado);
-          saveList(listaCompras);
+          saveList(itens);
         });
-        const customBox = document.createElement('span');
-        customBox.className = 'custom-checkbox';
-        checkboxCont.appendChild(checkbox);
-        checkboxCont.appendChild(customBox);
-        li.appendChild(checkboxCont);
+        const custom = document.createElement('span'); custom.className = 'custom-checkbox';
+        chkWrap.appendChild(chk); chkWrap.appendChild(custom);
+        li.appendChild(chkWrap);
 
         // nome
-        const nomeSpan = document.createElement('span');
-        nomeSpan.className = 'nome-ingrediente';
-        nomeSpan.textContent = item.nome;
-        li.appendChild(nomeSpan);
+        const nome = document.createElement('span');
+        nome.className = 'nome'; nome.textContent = item.nome;
+        li.appendChild(nome);
 
         // quantidade
-        const inputQuant = document.createElement('input');
-        inputQuant.type = 'text';
-        inputQuant.className = 'quantidade-input';
-        inputQuant.value = item.quantidade || '';
-        inputQuant.placeholder = 'qtd.';
-        inputQuant.addEventListener('input', () => {
-          item.quantidade = inputQuant.value;
-          saveList(listaCompras);
-        });
-        li.appendChild(inputQuant);
-
-        // mover de categoria
-        const sel = document.createElement('select');
-        sel.className = 'cat-select';
-        const cats = Object.keys(listaCompras).sort((a,b)=>a.localeCompare(b));
-        cats.forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c; opt.textContent = c;
-          if(c===categoria) opt.selected = true;
-          sel.appendChild(opt);
-        });
-        sel.addEventListener('change', () => {
-          moveItem(categoria, idx, sel.value);
-          rememberCategory(item.nome, sel.value); // memoriza a categoria escolhida
-        });
-        li.appendChild(sel);
+        const qtd = document.createElement('input');
+        qtd.type = 'text'; qtd.className = 'qtd';
+        qtd.value = item.quantidade || '';
+        qtd.placeholder = 'qtd.';
+        qtd.addEventListener('input', ()=>{ item.quantidade = qtd.value; saveList(itens); });
+        li.appendChild(qtd);
 
         // eliminar
-        const btnEliminar = document.createElement('button');
-        btnEliminar.className = 'btn-eliminar';
-        btnEliminar.textContent = 'Eliminar';
-        btnEliminar.title = 'Eliminar ingrediente';
-        btnEliminar.addEventListener('click', () => {
-          if(confirm(`Eliminar "${item.nome}"?`)) {
-            itens.splice(idx, 1);
-            saveList(listaCompras);
-            renderLista();
+        const del = document.createElement('button');
+        del.className = 'btn-eliminar'; del.textContent = 'Eliminar';
+        del.addEventListener('click', ()=>{
+          if(confirm(`Eliminar "${item.nome}"?`)){
+            itens.splice(idx,1); saveList(itens); render();
           }
         });
-        li.appendChild(btnEliminar);
+        li.appendChild(del);
 
         ul.appendChild(li);
       });
-
-      divCat.appendChild(ul);
-      return divCat;
     }
 
-    function renderLista() {
-      container.innerHTML = '';
-      const cats = Object.keys(listaCompras).sort((a,b)=>a.localeCompare(b));
-      if(!cats.length || cats.every(c=>!listaCompras[c].length)){
-        const p = document.createElement('p');
-        p.className = 'empty';
-        p.textContent = 'A lista está vazia. Adiciona itens acima ou gera a partir do Plano Semanal.';
-        container.appendChild(p);
-        return;
-      }
-      cats.forEach(categoria => {
-        const itens = listaCompras[categoria];
-        if(itens.length > 0){
-          container.appendChild(criarItemCategoria(categoria, itens));
+    function addItem(nome, quantidade){
+      nome = (nome||'').trim();
+      if(!nome) return;
+      // fundir por nome (case-insensitive)
+      const ix = itens.findIndex(i => i.nome.toLowerCase() === nome.toLowerCase());
+      if(ix>=0){
+        if(quantidade){
+          itens[ix].quantidade = itens[ix].quantidade
+            ? `${itens[ix].quantidade} + ${quantidade}` : quantidade;
         }
-      });
+      }else{
+        itens.push({ nome, quantidade: quantidade||'', comprado:false });
+      }
+      saveList(itens); render();
     }
 
-    // Toolbar actions
-    document.getElementById('btn-add').addEventListener('click', () => {
-      addItem(novoNome.value, novoQt.value, novoCat.value);
-      novoNome.value = ''; novoQt.value = ''; novoNome.focus();
+    // Toolbar
+    document.getElementById('btn-add').addEventListener('click', ()=>{
+      addItem(novoNome.value, novoQt.value);
+      novoNome.value=''; novoQt.value=''; novoNome.focus();
     });
-    document.getElementById('btn-clear-done').addEventListener('click', () => {
-      Object.keys(listaCompras).forEach(cat => {
-        listaCompras[cat] = listaCompras[cat].filter(i => !i.comprado);
-      });
-      saveList(listaCompras); renderLista();
+    document.getElementById('btn-clear-done').addEventListener('click', ()=>{
+      itens = itens.filter(i => !i.comprado);
+      saveList(itens); render();
     });
-    document.getElementById('btn-print').addEventListener('click', () => window.print());
-    document.getElementById('btn-reset').addEventListener('click', () => {
-      if(confirm('Apagar toda a lista de compras?')) {
-        listaCompras = { 'Outros': [] };
-        saveList(listaCompras); renderLista();
-      }
+    document.getElementById('btn-print').addEventListener('click', ()=>window.print());
+    document.getElementById('btn-reset').addEventListener('click', ()=>{
+      if(confirm('Apagar toda a lista de compras?')){ itens = []; saveList(itens); render(); }
     });
 
-    // Partilhar via WhatsApp
-    document.getElementById('btn-partilhar').addEventListener('click', () => {
-      let texto = '🛒 Minha Lista de Compras MealMaster:%0A%0A';
-      Object.entries(listaCompras).forEach(([categoria, itens]) => {
-        if(itens.length > 0){
-          texto += `*${categoria}:*%0A`;
-          itens.forEach(item => {
-            texto += `- ${item.nome}${item.quantidade ? ' ('+item.quantidade+')' : ''} ${item.comprado ? '✅' : ''}%0A`;
-          });
-          texto += '%0A';
-        }
+    // WhatsApp (lista simples)
+    document.getElementById('btn-partilhar').addEventListener('click', ()=>{
+      let texto = '🛒 Minha Lista de Compras:%0A%0A';
+      itens.forEach(i=>{
+        texto += `- ${i.nome}${i.quantidade ? ' ('+i.quantidade+')' : ''}%0A`;
       });
-      const urlWhatsApp = `https://wa.me/?text=${texto}`;
-      window.open(urlWhatsApp, '_blank');
+      window.open(`https://wa.me/?text=${texto}`,'_blank');
     });
 
-    // init
-    renderLista();
+    render();
   </script>
 </body>
 </html>

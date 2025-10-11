@@ -6,7 +6,6 @@
   <title>MealMaster - Perfil</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    /* Estilos específicos do Perfil (leves, para não chocar com style.css) */
     main { padding: 28px 40px; color:#4e342e; }
     h2 { margin: 0 0 18px; font-size: 1.9rem; font-weight: 800; }
     .grid { display:grid; gap:20px; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); }
@@ -14,10 +13,7 @@
     .card h3 { margin:0 0 12px; font-weight:800; }
     .field { margin:10px 0; }
     .field label { display:block; font-weight:700; margin-bottom:6px; }
-    .field input[type="text"],
-    .field input[type="email"],
-    .field textarea,
-    .chip-input {
+    .field input[type="text"], .field input[type="email"], .field textarea, .chip-input, select {
       width:100%; padding:10px 12px; border-radius:10px;
       border:1.5px solid #ffb74d; background:#fff; color:#4e342e; font-weight:600;
     }
@@ -25,7 +21,6 @@
     .counter button { border:0; background:#4caf50; color:#fff; font-weight:800; border-radius:10px; padding:8px 12px; cursor:pointer; }
     .counter input { width:80px; text-align:center; border:1.5px solid #ffb74d; border-radius:10px; padding:8px 10px; background:#fff; font-weight:700; }
     .refeicoes { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:8px 14px; }
-    .refeicoes label { user-select:none; }
     .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
     .btn { border:0; border-radius:26px; padding:10px 16px; font-weight:800; cursor:pointer; background:#ffcc80; color:#4e342e; box-shadow:0 2px 6px rgba(0,0,0,.08) }
     .btn--brand{ background:linear-gradient(90deg,#4caf50,#81c784); color:#fffde7; box-shadow:0 6px 14px rgba(129,199,132,.45) }
@@ -38,26 +33,22 @@
 <body>
   <header>
     <h1>MealMaster</h1>
-    <div class="profile-icon" title="Perfil">👤</div>
+    <a href="perfil.html" class="profile-icon" title="Abrir perfil" aria-label="Abrir perfil">👤</a>
   </header>
 
   <nav class="sidebar" role="navigation" aria-label="Menu principal">
-    <a href="index.html"     data-route="index.html">Menu Principal</a>
-    <a href="receitas.html"      data-route="receitas.html">Receitas</a>
-    <a href="calendario.html"    data-route="calendario.html">Plano Semanal</a>
-    <a href="listaCompras.html"  data-route="listaCompras.html">Lista de Compras</a>
+    <a href="index.html" data-route="index.html">Menu Principal</a>
+    <a href="receitas.html" data-route="receitas.html">Receitas</a>
+    <a href="calendario.html" data-route="calendario.html">Plano Semanal</a>
+    <a href="listaCompras.html" data-route="listaCompras.html">Lista de Compras</a>
     <a href="configuracoes.html" data-route="configuracoes.html">Configurações</a>
-    <a href="perfil.html"        data-route="perfil.html">Perfil</a>
   </nav>
 
   <script>
-    // marca menu ativo
     (function () {
       const here = location.pathname.split('/').pop() || 'index.html';
       document.querySelectorAll('.sidebar a').forEach(a => {
-        if (a.getAttribute('data-route') === here) {
-          a.classList.add('active'); a.setAttribute('aria-current','page');
-        }
+        if (a.getAttribute('data-route') === here) { a.classList.add('active'); a.setAttribute('aria-current','page'); }
       });
     })();
   </script>
@@ -71,13 +62,39 @@
         <h3>Dados Pessoais</h3>
         <div class="field">
           <label for="nome">Nome</label>
-          <input type="text" id="nome" name="nome" placeholder="Ex: Ana Filipa" required />
+          <input type="text" id="nome" name="nome" placeholder="Ex: Ana Filipa" />
         </div>
         <div class="field">
           <label for="email">Email</label>
           <input type="email" id="email" name="email" placeholder="exemplo@mail.com" />
         </div>
-        <div class="hint">Guardamos estes dados só no teu navegador (localStorage).</div>
+        <div class="hint">Tudo é guardado apenas no teu navegador (localStorage).</div>
+      </section>
+
+      <!-- Localização -->
+      <section class="card">
+        <h3>Localização</h3>
+        <div class="field">
+          <label for="pais">País / Região</label>
+          <select id="pais">
+            <option value="">— Selecionar —</option>
+            <option value="PT">Portugal</option>
+            <option value="BR">Brasil</option>
+            <option value="AO">Angola</option>
+            <option value="MZ">Moçambique</option>
+            <option value="CV">Cabo Verde</option>
+            <option value="ST">São Tomé e Príncipe</option>
+            <option value="TL">Timor-Leste</option>
+            <option value="OUTRO_N">Outro (Hemisfério Norte)</option>
+            <option value="OUTRO_S">Outro (Hemisfério Sul)</option>
+          </select>
+        </div>
+        <div class="hint">
+          Usamos isto para <strong>sazonalidade automática</strong> (hemisfério) e <strong>sinónimos de ingredientes</strong> (ex.: courgette ↔ abobrinha).
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span id="resume-locale" class="pill" aria-live="polite"></span>
+        </div>
       </section>
 
       <!-- Preferências alimentares -->
@@ -94,7 +111,7 @@
         </div>
       </section>
 
-      <!-- Número de pessoas e refeições diárias -->
+      <!-- Plano diário -->
       <section class="card">
         <h3>Plano diário</h3>
         <div class="field">
@@ -130,14 +147,14 @@
           <input type="file" id="import-file" accept="application/json" hidden />
           <button type="button" id="btn-reset" class="btn btn--ghost">Limpar Perfil</button>
         </div>
-        <div class="hint">Exportar/Importar cria um ficheiro JSON com os teus dados (continua tudo local).</div>
       </section>
     </form>
   </main>
 
   <script>
     const LS_PERFIL = 'mealmaster_perfil';
-    const LS_REFEICOES = 'refeicoesSelecionadas'; // compat com o que já usavas
+    const LS_REFEICOES = 'refeicoesSelecionadas';
+    const LS_LOCALE = 'mealmaster_locale'; // {country, hemisphere: 'N'|'S', synonymLocale: 'pt-PT'|'pt-BR'}
 
     // elementos
     const form = document.getElementById('perfil-form');
@@ -145,6 +162,8 @@
     const email = document.getElementById('email');
     const alergias = document.getElementById('alergias');
     const dietas = document.getElementById('dietas');
+    const pais = document.getElementById('pais');
+    const resumeLocale = document.getElementById('resume-locale');
     const numPessoas = document.getElementById('num-pessoas');
     const btnDec = document.getElementById('btn-dec');
     const btnInc = document.getElementById('btn-inc');
@@ -153,26 +172,41 @@
     const btnReset = document.getElementById('btn-reset');
     const importFile = document.getElementById('import-file');
 
+    const COUNTRY_META = {
+      PT:{name:'Portugal', hemisphere:'N', synonymLocale:'pt-PT'},
+      BR:{name:'Brasil', hemisphere:'S', synonymLocale:'pt-BR'},
+      AO:{name:'Angola', hemisphere:'S', synonymLocale:'pt-PT'},
+      MZ:{name:'Moçambique', hemisphere:'S', synonymLocale:'pt-PT'},
+      CV:{name:'Cabo Verde', hemisphere:'N', synonymLocale:'pt-PT'},
+      ST:{name:'São Tomé e Príncipe', hemisphere:'N', synonymLocale:'pt-PT'},
+      TL:{name:'Timor-Leste', hemisphere:'S', synonymLocale:'pt-PT'},
+      OUTRO_N:{name:'Outro (Hemisfério Norte)', hemisphere:'N', synonymLocale:'pt-PT'},
+      OUTRO_S:{name:'Outro (Hemisfério Sul)', hemisphere:'S', synonymLocale:'pt-PT'}
+    };
+
+    function localeSummary(obj){
+      if(!obj) return '';
+      const label = (COUNTRY_META[obj.country]?.name) || '—';
+      return `País: ${label} • Hemisfério: ${obj.hemisphere==='S'?'Sul':'Norte'} • Sinónimos: ${obj.synonymLocale}`;
+    }
+
     function loadPerfil(){
-      try{
-        const raw = localStorage.getItem(LS_PERFIL);
-        return raw ? JSON.parse(raw) : null;
-      }catch{ return null; }
+      try{ const raw = localStorage.getItem(LS_PERFIL); return raw ? JSON.parse(raw) : null; }catch{ return null; }
     }
     function savePerfil(obj){
       localStorage.setItem(LS_PERFIL, JSON.stringify(obj));
-      // também guarda as refeições no nome antigo, para o calendário ler sem mexer
       localStorage.setItem(LS_REFEICOES, JSON.stringify(obj.refeicoes || []));
     }
+
+    function loadLocale(){ try{ return JSON.parse(localStorage.getItem(LS_LOCALE)) || null; }catch{ return null; } }
+    function saveLocale(loc){ localStorage.setItem(LS_LOCALE, JSON.stringify(loc)); }
 
     function readRefeicoesMarcadas(){
       return Array.from(document.querySelectorAll('input[name="refeicoes"]:checked')).map(cb=>cb.value);
     }
     function marcarRefeicoes(arr){
       const set = new Set(arr||[]);
-      document.querySelectorAll('input[name="refeicoes"]').forEach(cb=>{
-        cb.checked = set.has(cb.value);
-      });
+      document.querySelectorAll('input[name="refeicoes"]').forEach(cb=>{ cb.checked = set.has(cb.value); });
     }
 
     // carregar ao abrir
@@ -185,14 +219,30 @@
         dietas.value = (p.dietas || []).join(', ');
         numPessoas.value = p.numPessoas || 1;
         marcarRefeicoes(p.refeicoes || []);
+        if(p.pais) pais.value = p.pais;
       }else{
-        // defaults simpáticos
         marcarRefeicoes(['pequeno-almoco','almoco','jantar']);
         numPessoas.value = 1;
       }
+      // locale pill
+      const loc = loadLocale();
+      if(loc) resumeLocale.textContent = localeSummary(loc);
+      else resumeLocale.textContent = 'Sem localização definida';
     })();
 
-    // +/-
+    pais.addEventListener('change', ()=>{
+      const meta = COUNTRY_META[pais.value] || null;
+      if(!meta){
+        saveLocale(null);
+        resumeLocale.textContent = 'Sem localização definida';
+        return;
+      }
+      const loc = { country:pais.value, hemisphere:meta.hemisphere, synonymLocale:meta.synonymLocale };
+      saveLocale(loc);
+      resumeLocale.textContent = localeSummary(loc);
+    });
+
+    // +/- pessoas
     btnDec.addEventListener('click', () => {
       let v = parseInt(numPessoas.value||'1',10);
       numPessoas.value = Math.max(1, v-1);
@@ -211,73 +261,50 @@
         alergias: alergias.value.trim(),
         dietas: (dietas.value||'').split(/[;,]/).map(s=>s.trim()).filter(Boolean),
         numPessoas: Math.max(1, Math.min(20, parseInt(numPessoas.value||'1',10))),
-        refeicoes: readRefeicoesMarcadas()
+        refeicoes: readRefeicoesMarcadas(),
+        pais: pais.value || ''
       };
       savePerfil(perfil);
       alert('Perfil guardado com sucesso!');
     });
 
-    // guardar e ir ao plano
     btnAplicarPlano.addEventListener('click', () => {
-      form.requestSubmit(); // dispara o submit acima
-      // pequeno atraso só para garantir setItem antes de navegar
+      form.requestSubmit();
       setTimeout(()=>{ location.href = 'calendario.html'; }, 50);
     });
 
     // exportar/importar
     btnExport.addEventListener('click', () => {
-      const data = loadPerfil() || {
-        nome:'', email:'', alergias:'', dietas:[], numPessoas:1, refeicoes:[]
-      };
+      const data = loadPerfil() || {nome:'',email:'',alergias:'',dietas:[],numPessoas:1,refeicoes:[],pais:''};
       const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'mealmaster-perfil.json';
-      a.click();
-      URL.revokeObjectURL(a.href);
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mealmaster-perfil.json'; a.click(); URL.revokeObjectURL(a.href);
     });
 
     importFile.addEventListener('change', async () => {
-      const file = importFile.files[0];
-      if(!file) return;
+      const file = importFile.files[0]; if(!file) return;
       try{
-        const text = await file.text();
-        const obj = JSON.parse(text);
-        // validação mínima
-        if(typeof obj !== 'object') throw new Error('Formato inválido');
+        const text = await file.text(); const obj = JSON.parse(text);
         savePerfil({
-          nome: obj.nome||'',
-          email: obj.email||'',
-          alergias: obj.alergias||'',
+          nome: obj.nome||'', email: obj.email||'', alergias: obj.alergias||'',
           dietas: Array.isArray(obj.dietas)? obj.dietas : [],
-          numPessoas: obj.numPessoas||1,
-          refeicoes: Array.isArray(obj.refeicoes)? obj.refeicoes : []
+          numPessoas: obj.numPessoas||1, refeicoes: Array.isArray(obj.refeicoes)? obj.refeicoes : [],
+          pais: obj.pais||''
         });
-        // re-render no formulário
         const p = loadPerfil();
-        nome.value = p.nome||''; email.value = p.email||'';
-        alergias.value = p.alergias||'';
-        dietas.value = (p.dietas||[]).join(', ');
-        numPessoas.value = p.numPessoas||1;
-        marcarRefeicoes(p.refeicoes||[]);
-        alert('Perfil importado com sucesso!');
-        importFile.value = '';
-      }catch(e){
-        alert('Não foi possível importar o ficheiro. Verifica se é um JSON válido.');
-      }
+        nome.value=p.nome||''; email.value=p.email||''; alergias.value=p.alergias||''; dietas.value=(p.dietas||[]).join(', ');
+        numPessoas.value=p.numPessoas||1; marcarRefeicoes(p.refeicoes||[]); pais.value=p.pais||'';
+        alert('Perfil importado com sucesso!'); importFile.value='';
+      }catch{ alert('Não foi possível importar. Verifica se é um JSON válido.'); }
     });
 
-    // limpar tudo
     btnReset.addEventListener('click', () => {
       if(confirm('Queres mesmo limpar o teu perfil?')){
         localStorage.removeItem(LS_PERFIL);
-        // mantemos LS_REFEICOES sincronizado para o calendário não estranhar
         localStorage.removeItem(LS_REFEICOES);
-        // limpar campos
-        nome.value = ''; email.value = '';
-        alergias.value = ''; dietas.value = '';
-        marcarRefeicoes(['pequeno-almoco','almoco','jantar']);
-        numPessoas.value = 1;
+        localStorage.removeItem(LS_LOCALE);
+        nome.value=''; email.value=''; alergias.value=''; dietas.value=''; pais.value='';
+        marcarRefeicoes(['pequeno-almoco','almoco','jantar']); numPessoas.value=1;
+        resumeLocale.textContent = 'Sem localização definida';
       }
     });
   </script>
