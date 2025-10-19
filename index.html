@@ -18,6 +18,40 @@
     .page-title{margin:0 0 4px;font-size:1.8rem;font-weight:900}
     .page-sub{margin:0;opacity:.75;font-weight:600}
 
+    /* ====== BOTÕES (base + variantes) ====== */
+    .btn{
+      display:inline-block;
+      border:1.5px solid #ffb74d;
+      border-radius:12px;
+      padding:12px 16px;
+      font-weight:800;
+      cursor:pointer;
+      background:#fffde7;
+      color:#4e342e;
+      box-shadow:0 2px 6px rgba(0,0,0,.08);
+      transition:transform .12s ease, filter .12s ease, box-shadow .12s ease;
+    }
+    .btn:hover{ filter:brightness(1.03); transform:translateY(-1px); }
+    .btn:active{ transform:translateY(0); }
+    .btn:focus-visible{ outline:none; box-shadow: var(--ring), 0 2px 6px rgba(0,0,0,.12); }
+
+    .btn--brand{
+      background:linear-gradient(90deg,#ffb347,#ffcc33);
+      color:#6d4c41;
+      box-shadow:0 6px 14px rgba(255,179,71,.35);
+      border-color:#ffb74d;
+    }
+    .btn--brand:hover{ filter:brightness(1.04); }
+
+    .btn--danger{
+      background:#e57373; color:#fff; border-color:#e57373;
+      box-shadow:0 6px 14px rgba(229,115,115,.35);
+    }
+
+    .btn--full{ width:100%; }
+    a.btn{text-decoration:none}
+    a.btn:link,a.btn:visited{color:inherit}
+
     /* cartões mais clean */
     .pretty-card{
       background: linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.74));
@@ -47,10 +81,6 @@
     .input-wrap input{border:0;outline:0;flex:1;font-weight:700;color:var(--ink);background:transparent}
     .input-wrap:focus-within{box-shadow:var(--ring)}
     .i{opacity:.8;font-size:1rem}
-    .btn--full{width:100%}
-    .btn--danger{background:#e57373;color:#fff}
-    a.btn{text-decoration:none}
-    a.btn:link,a.btn:visited{color:inherit}
 
     /* Dashboard */
     #dashboard{margin:24px 40px;padding:0 0 40px}
@@ -122,12 +152,12 @@
           <span class="i">🔒</span>
           <input id="pass" type="password" placeholder="password" minlength="6" required>
         </div>
-        <button class="btn btn--brand btn--full">Entrar / Criar conta</button>
+        <button class="btn btn--brand btn--full" type="submit">Entrar / Criar conta</button>
       </form>
 
       <div id="authActions" hidden class="auth-actions">
         <span id="userEmail" class="chip"></span>
-        <button id="logoutBtn" class="btn btn--danger">Sair</button>
+        <button id="logoutBtn" class="btn btn--danger" type="button">Sair</button>
       </div>
     </div>
 
