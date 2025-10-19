@@ -52,7 +52,8 @@
   })();
 </script>
 
-<main>
+<!-- ESCONDIDO ATÉ VALIDAR AUTENTICAÇÃO -->
+<main id="page" hidden>
   <h2>Configurações do Plano</h2>
 
   <div class="grid">
@@ -90,7 +91,7 @@
       </table>
     </section>
 
-    <!-- Preferências por refeição (mantidas) -->
+    <!-- Preferências por refeição -->
     <section class="card">
       <h3>Preferências por refeição</h3>
       <div class="field">
@@ -177,20 +178,15 @@
   function rulesToUI(r){
     $('#rotation').value = r.rotationDays ?? 14;
     $$('input[name="weekStart"]').forEach(rb => rb.checked = (rb.value === (r.weekStart||'mon')));
-
-    // limits
-    const setLM = (key, field, val)=>{ const el = $(`#${field}_${key}`); if(el) el.value = (r.limits?.[key]?.[field.replace(/^(min_|max_)/,'')] ?? 0); };
     ['massa','peixe','carne','sopa','salada'].forEach(k=>{
-      $(`#min_${k}`).value = r.limits?.[k]?.min ?? 0;
-      $(`#max_${k}`).value = r.limits?.[k]?.max ?? 7;
+      $('#min_'+k).value = r.limits?.[k]?.min ?? 0;
+      $('#max_'+k).value = r.limits?.[k]?.max ?? 7;
     });
-
     $('#pref_pa').value  = r.meals['pequeno-almoco'].prefer || '';
     $('#pref_alm').value = r.meals['almoco'].prefer || '';
     $('#pref_lan').value = r.meals['lanche'].prefer || '';
     $('#pref_jan').value = r.meals['jantar'].prefer || '';
     $('#jantar_leve').checked = !!r.meals['jantar'].light;
-
     $$('.dia').forEach(i=> i.checked = (r.meatless.days||[]).includes(parseInt(i.value,10)));
     $('#semcarne_peixe').checked = !!r.meatless.allowFish;
   }
@@ -201,8 +197,8 @@
     const limits = {};
     ['massa','peixe','carne','sopa','salada'].forEach(k=>{
       limits[k] = {
-        min: Math.max(0, parseInt($(`#min_${k}`).value||'0',10)),
-        max: Math.max(0, parseInt($(`#max_${k}`).value||'0',10))
+        min: Math.max(0, parseInt(($('#min_'+k).value||'0'),10)),
+        max: Math.max(0, parseInt(($('#max_'+k).value||'0'),10))
       };
     });
 
@@ -217,13 +213,12 @@
         'jantar':         { prefer: $('#pref_jan').value, light: $('#jantar_leve').checked },
         'ceia':           { prefer: '' }
       },
-      season: { verao: $('#tag_verao')?.value || (r.season?.verao||''), inverno: $('#tag_inverno')?.value || (r.season?.inverno||'') },
+      season: { verao: r.season?.verao || '', inverno: r.season?.inverno || '' },
       meatless: { days: $$('.dia:checked').map(i=>parseInt(i.value,10)), allowFish: $('#semcarne_peixe').checked }
     };
   }
 
-  (function(){ rulesToUI(loadRules()); })();
-
+  // listeners (podem ser registados já)
   $('#btnGuardar').addEventListener('click', ()=>{
     saveRules(uiToRules());
     alert('Regras guardadas!');
@@ -231,15 +226,26 @@
   $('#btnPadroes').addEventListener('click', ()=>{
     const r = defaults(); saveRules(r); rulesToUI(r);
   });
+
+  // arranque adiado: só corre depois do guard de auth
+  function initPage(){ rulesToUI(loadRules()); }
 </script>
 
-<!-- opcional: repor receitas de exemplo -->
-<button id="btn-reseed" class="btn">Repor receitas de exemplo</button>
-<script>
-  document.getElementById('btn-reseed').addEventListener('click', ()=>{
-    if(!confirm('Apagar o teu livro atual e repor exemplos?')) return;
-    localStorage.removeItem('mealmaster_receitas'); location.reload();
+<!-- GUARD DE AUTENTICAÇÃO -->
+<script type="module">
+  import { auth } from './firebase.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+  const page = document.getElementById('page');
+  page.hidden = true; // defesa
+
+  onAuthStateChanged(auth, (u)=>{
+    if (!u) { location.href = 'index.html'; return; }
+    page.hidden = false;
+    // inicializa UI depois da autenticação
+    window.initPage && window.initPage();
   });
 </script>
+
 </body>
 </html>

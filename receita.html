@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Receita - MealMaster</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="seed.js"></script>
-
   <style>
     body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#fffde7; color:#4e342e; margin:0; }
     header { padding:20px 30px; background:#4caf50; color:#fff; display:flex; justify-content:space-between; align-items:center; }
@@ -190,28 +188,33 @@
     // util
     const $ = s => document.querySelector(s);
 
+    // ⚠️ devolve string (suporta UUID do Firestore)
     function getIdFromQuery(){
       const idStr = new URLSearchParams(location.search).get('id');
-      return idStr ? Number(idStr) : null;
+      return idStr ? decodeURIComponent(idStr) : null;
     }
+
+    // Primeiro tenta o livro vindo do Firestore (window._livroFS). Fallback: LS.
     function lerLivro(){
-      try{ const raw = localStorage.getItem(LS_REC); const arr = raw?JSON.parse(raw):[]; return Array.isArray(arr)?arr:[]; }catch{return []}
+      if (Array.isArray(window._livroFS) && window._livroFS.length) return window._livroFS;
+      try{
+        const raw = localStorage.getItem(LS_REC);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      }catch{ return []; }
     }
+
     function guardarLivro(arr){ localStorage.setItem(LS_REC, JSON.stringify(arr)); }
-    function lerPlano(){
-      try{ const raw = localStorage.getItem(LS_PLANO); return raw?JSON.parse(raw):{}; }catch{return {}}
-    }
+    function lerPlano(){ try{ const raw = localStorage.getItem(LS_PLANO); return raw?JSON.parse(raw):{}; }catch{return {}} }
     function guardarPlano(obj){ localStorage.setItem(LS_PLANO, JSON.stringify(obj)); }
-    function lerLista(){
-      try{ const raw = localStorage.getItem(LS_LISTA); return raw?JSON.parse(raw):{}; }catch{return {}}
-    }
+    function lerLista(){ try{ const raw = localStorage.getItem(LS_LISTA); return raw?JSON.parse(raw):{}; }catch{return {}} }
     function guardarLista(obj){ localStorage.setItem(LS_LISTA, JSON.stringify(obj)); }
 
     let receita = null;
 
     function render(){
       if(!receita){
-        $('main').innerHTML = `
+        document.querySelector('main').innerHTML = `
           <div class="card" style="text-align:center">
             <h3>Receita não encontrada</h3>
             <p>Volta à <a href="receitas.html">lista de receitas</a>.</p>
@@ -222,12 +225,10 @@
       $('#r-img').src = receita.img || 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=800&q=60';
       $('#r-img').alt = 'Imagem da receita ' + receita.titulo;
 
-      // tags
       const tags = receita.tags || [];
       $('#r-tags').innerHTML = tags.map(t=>`<span class="tag">${t}</span>`).join('') || '<span style="opacity:.7">sem tags</span>';
       $('#r-meta').textContent = traduzTipo(receita.tipo || 'almoco');
 
-      // ingredientes & passos
       $('#r-ing').textContent = receita.ingredientes || '—';
       $('#r-steps').textContent = receita.passos || '—';
       $('#r-desc').textContent = receita.descricao || '';
@@ -262,19 +263,11 @@
     // ——— Lista de compras
     function enviarParaCompras(){
       const lista = lerLista();
-      // categoria padrão "Outros"
       if(!lista['Outros']) lista['Outros'] = [];
       const linhas = (receita.ingredientes || '').split('\n').map(l=>l.trim()).filter(Boolean);
-
-      linhas.forEach(txt=>{
-        // Cria item simples; se quiseres, podes tentar separar quantidade vs nome
-        lista['Outros'].push({ nome: txt, quantidade: '', comprado: false });
-      });
-
+      linhas.forEach(txt=>{ lista['Outros'].push({ nome: txt, quantidade: '', comprado: false, src:'manual' }); });
       guardarLista(lista);
       alert('Ingredientes enviados para a lista de compras ✅');
-      // opcional: ir directo para a página
-      // location.href = 'listaCompras.html';
     }
 
     // —— eventos
@@ -286,12 +279,12 @@
       const i = livro.findIndex(x=>x.id===receita.id);
       const upd = {
         ...receita,
-        titulo: $('#e-titulo').value.trim(),
-        tipo: $('#e-tipo').value,
-        tags: $('#e-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
-        img: $('#e-img').value.trim(),
-        ingredientes: $('#e-ing').value,
-        passos: $('#e-passos').value
+        titulo: document.getElementById('e-titulo').value.trim(),
+        tipo: document.getElementById('e-tipo').value,
+        tags: document.getElementById('e-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+        img: document.getElementById('e-img').value.trim(),
+        ingredientes: document.getElementById('e-ing').value,
+        passos: document.getElementById('e-passos').value
       };
       if(i>=0) livro[i]=upd;
       guardarLivro(livro);
@@ -300,32 +293,57 @@
       render();
     });
 
-    $('#btn-add-plano').addEventListener('click', abrirPlano);
-    $('#p-cancelar').addEventListener('click', fecharPlano);
-    $('#form-plano').addEventListener('submit', e=>{
+    document.getElementById('btn-add-plano').addEventListener('click', abrirPlano);
+    document.getElementById('p-cancelar').addEventListener('click', fecharPlano);
+    document.getElementById('form-plano').addEventListener('submit', e=>{
       e.preventDefault();
-      const data = $('#p-data').value;            // YYYY-MM-DD
-      const refeicao = $('#p-ref').value;         // "Jantar", etc.
+      const data = document.getElementById('p-data').value;
+      const refeicao = document.getElementById('p-ref').value;
       if(!data || !refeicao) return;
 
       const plano = lerPlano();
       if(!plano[data]) plano[data] = {};
-      plano[data][refeicao] = receita.titulo;     // guarda só o nome (simples)
+      plano[data][refeicao] = receita.titulo;
       guardarPlano(plano);
       fecharPlano();
       alert('Adicionado ao plano ✅');
     });
 
-    $('#btn-add-compras').addEventListener('click', enviarParaCompras);
+    document.getElementById('btn-add-compras').addEventListener('click', enviarParaCompras);
 
-    // —— boot
-    (function init(){
+    // expõe para o loader do Firestore
+    window._hydrateRecipe = function init(){
       const id = getIdFromQuery();
-      if(!id){ render(); return; }
       const livro = lerLivro();
-      receita = livro.find(r=>r.id===id) || null;
+      receita = id ? (livro.find(r => String(r.id) === String(id)) || null) : null;
       render();
-    })();
+    };
+  </script>
+
+  <!-- Carrega firebase e depois o livro do Firestore; só então faz render -->
+  <script type="module">
+    import { auth, getAllRecipes } from './firebase.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+    onAuthStateChanged(auth, async (u)=>{
+      if(!u){
+        // podes redirecionar se for obrigatório login
+        // location.href = 'index.html';
+        // mesmo sem login, tenta hidratar via LS
+        window._hydrateRecipe?.();
+        return;
+      }
+      try{
+        const livro = await getAllRecipes(u.uid);
+        window._livroFS = Array.isArray(livro) ? livro : [];
+        // sincroniza para LS para navegação offline/legacy
+        localStorage.setItem('mealmaster_receitas', JSON.stringify(window._livroFS));
+      }catch(e){
+        console.warn('Falha a carregar receitas do Firestore:', e);
+        window._livroFS = [];
+      }
+      window._hydrateRecipe?.();
+    });
   </script>
 </body>
 </html>

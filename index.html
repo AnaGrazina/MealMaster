@@ -5,299 +5,267 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MealMaster</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="seed.js" defer></script>
   <meta name="theme-color" content="#4caf50" />
+  <style>
+    [hidden]{display:none!important;visibility:hidden!important}
+
+    :root{
+      --brand:#4caf50; --brand-d:#2e7d32; --soft:#fffde7; --ink:#4e342e;
+      --accent: linear-gradient(90deg,#ffb347,#ffcc33);
+      --ring: 0 0 0 3px rgba(76,175,80,.18);
+      --glass: rgba(255,255,255,.6);
+    }
+    .page-title{margin:0 0 4px;font-size:1.8rem;font-weight:900}
+    .page-sub{margin:0;opacity:.75;font-weight:600}
+
+    /* cartões mais clean */
+    .pretty-card{
+      background: linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.74));
+      backdrop-filter: blur(6px);
+      border: 1px solid #ece7df;
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
+      border-radius: 16px;
+    }
+    .card.pretty-card{padding:16px 18px}
+
+    /* HERO (login) */
+    .hero{
+      display:grid;grid-template-columns:1.3fr .7fr;gap:24px;
+      background:
+        radial-gradient(1200px 400px at -10% -20%, #ffe7ba, transparent),
+        radial-gradient(1000px 400px at 120% 120%, #c8f7d1, transparent),
+        linear-gradient(135deg,#fff,#fffdf3);
+      padding:24px;margin:28px auto;max-width:760px;
+    }
+    .hero__left{padding:6px 10px 10px}
+    .hero__title{margin:0 0 6px;font-size:1.6rem;font-weight:900}
+    .hero__desc{margin:0 0 14px;color:#5d4037}
+    .auth-actions{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+    .chip{padding:6px 10px;border-radius:999px;background:#e8f5e9;color:#1b5e20;font-weight:800}
+    .loginform{display:grid;gap:10px}
+    .input-wrap{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #ffb74d;border-radius:12px;padding:8px 10px}
+    .input-wrap input{border:0;outline:0;flex:1;font-weight:700;color:var(--ink);background:transparent}
+    .input-wrap:focus-within{box-shadow:var(--ring)}
+    .i{opacity:.8;font-size:1rem}
+    .btn--full{width:100%}
+    .btn--danger{background:#e57373;color:#fff}
+    a.btn{text-decoration:none}
+    a.btn:link,a.btn:visited{color:inherit}
+
+    /* Dashboard */
+    #dashboard{margin:24px 40px;padding:0 0 40px}
+    .dash-top{display:flex;gap:18px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:16px 18px}
+    .qsearch{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #ffb74d;border-radius:999px;padding:6px 10px}
+    .qsearch input{border:0;outline:0;min-width:220px;font-weight:700;background:transparent}
+    .qsearch:focus-within{box-shadow:var(--ring)}
+    @media (max-width:640px){.qsearch button{display:none}}
+
+    .shortcuts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0 18px}
+
+    /* Atalhos comuns */
+    .shortcut{
+      display:flex;align-items:center;gap:12px;
+      padding:16px 18px;border-radius:16px;
+      background:linear-gradient(180deg,#fff,#faf8f3);
+      border:1px solid #ece7df; box-shadow:0 10px 22px rgba(0,0,0,.06);
+      text-decoration:none; color:inherit; font-weight:900;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    .shortcut:hover{ transform:translateY(-2px); box-shadow:0 14px 26px rgba(0,0,0,.08); border-color:#e6e0d6;}
+    .shortcut:focus-visible{ outline:none; box-shadow: 0 0 0 3px rgba(76,175,80,.18); }
+    .shortcut .sicon{
+      width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
+      font-size:1.15rem;background:linear-gradient(135deg,#eef7f0,#fff);border:1px solid #dfeadf;color:#2e7d32;flex-shrink:0;
+    }
+    .shortcut .label{ font-weight:900 }
+    .shortcut .spacer{ flex:1 }
+
+    .pill{display:inline-block;margin-left:8px;min-width:22px;padding:2px 7px;border-radius:999px;background:#e76a6a;color:#fff;text-align:center;font-weight:800}
+    .link{display:inline-block;font-weight:800;text-decoration:none;color:var(--ink)}
+    .link:hover{text-decoration:underline}
+  </style>
 </head>
 <body>
-  <!-- Cabeçalho padrão -->
   <header>
     <h1>MealMaster</h1>
-    <a href="perfil.html" class="profile-icon" title="Abrir perfil" aria-label="Abrir perfil">👤</a>
+    <div style="display:flex;gap:.5rem;align-items:center">
+      <span id="userEmailTop" style="font-weight:700"></span>
+      <button id="logoutTop" class="btn" style="display:none;background:#e57373;color:#fff;padding:.35rem .7rem">Sair</button>
+      <a href="perfil.html" class="profile-icon" title="Abrir perfil" aria-label="Abrir perfil">👤</a>
+    </div>
   </header>
 
-  <!-- MENU (rotas em minúsculas) -->
   <nav class="sidebar" role="navigation" aria-label="Menu principal">
-    <a href="index.html"       data-route="index.html">Menu Principal</a>
-    <a href="receitas.html"    data-route="receitas.html">Receitas</a>
-    <a href="calendario.html"  data-route="calendario.html">Plano Semanal</a>
+    <a href="index.html" data-route="index.html">Menu Principal</a>
+    <a href="receitas.html" data-route="receitas.html">Receitas</a>
+    <a href="calendario.html" data-route="calendario.html">Plano Semanal</a>
     <a href="listaCompras.html" data-route="listaCompras.html">Lista de Compras</a>
     <a href="configuracoes.html" data-route="configuracoes.html">Configurações</a>
   </nav>
 
-  <!-- marca o link ativo no menu -->
+  <!-- LOGIN -->
+  <section id="authBox" class="card hero" hidden>
+    <div class="hero__left">
+      <h2 class="hero__title">Entra no teu MealMaster</h2>
+      <p class="hero__desc">
+        Usa um <b>nome de utilizador</b> no <b>formato e-mail</b> (ex.: ana@teste.com).
+        Não precisa de ser real — serve só para identificar a tua conta.
+        A palavra-passe deve ter <b>mín. 6 caracteres</b>. Se não tens conta, é criada automaticamente.
+      </p>
+
+      <form id="loginForm" class="loginform">
+        <div class="input-wrap">
+          <span class="i">✉️</span>
+          <input id="email" type="email" placeholder="email@exemplo.com" required>
+        </div>
+        <div class="input-wrap">
+          <span class="i">🔒</span>
+          <input id="pass" type="password" placeholder="password" minlength="6" required>
+        </div>
+        <button class="btn btn--brand btn--full">Entrar / Criar conta</button>
+      </form>
+
+      <div id="authActions" hidden class="auth-actions">
+        <span id="userEmail" class="chip"></span>
+        <button id="logoutBtn" class="btn btn--danger">Sair</button>
+      </div>
+    </div>
+
+    <div class="hero__right" aria-hidden="true">
+      <div class="hero-ill">
+        <div class="hero-plate"></div>
+        <div class="hero-steam s1"></div>
+        <div class="hero-steam s2"></div>
+        <div class="hero-steam s3"></div>
+      </div>
+    </div>
+  </section>
+
   <script>
-    (function () {
+    (function(){
       const here = location.pathname.split('/').pop() || 'index.html';
-      document.querySelectorAll('.sidebar a').forEach(a => {
-        if (a.getAttribute('data-route') === here) {
-          a.classList.add('active');
-          a.setAttribute('aria-current', 'page');
-        }
+      document.querySelectorAll('.sidebar a').forEach(a=>{
+        if(a.getAttribute('data-route')===here){ a.classList.add('active'); a.setAttribute('aria-current','page'); }
       });
     })();
   </script>
 
-  <!-- DASHBOARD -->
-  <main id="dashboard">
-    <!-- Topo: título + pesquisa -->
-    <div class="dash-top">
-      <h2>Bem-vindo(a) ao MealMaster!</h2>
-      <form id="quick-search" role="search" aria-label="Pesquisar receitas">
+  <main id="dashboard" hidden>
+    <div class="dash-top pretty-card">
+      <div>
+        <h2 class="page-title">Bem-vindo(a) ao MealMaster! 👋</h2>
+        <p class="page-sub">Organiza a semana, descobre ideias e mantém a tua lista de compras em dia.</p>
+      </div>
+
+      <form id="quick-search" role="search" aria-label="Pesquisar receitas" class="qsearch">
+        <span class="i">🔎</span>
         <input id="qs-input" type="search" placeholder="Procurar receita..." list="qs-sugestoes" />
         <datalist id="qs-sugestoes"></datalist>
         <button class="btn btn--brand" type="submit">Pesquisar</button>
       </form>
     </div>
 
-    <!-- Atalhos rápidos -->
-    <section class="card shortcuts" aria-label="Atalhos rápidos">
-      <a class="btn btn--big btn--brand" href="receitas.html">+ Adicionar receita</a>
-      <a class="btn btn--big" href="calendario.html">Abrir plano semanal</a>
-      <a class="btn btn--big" href="listaCompras.html">
-        Lista de compras
+    <!-- SÓ os 3 atalhos -->
+    <section class="shortcuts-grid">
+      <a class="shortcut pretty-card" href="receitas.html" aria-label="Adicionar receita">
+        <span class="sicon">🍳</span>
+        <span class="label">Adicionar receita</span>
+      </a>
+
+      <a class="shortcut pretty-card" href="calendario.html" aria-label="Abrir plano semanal">
+        <span class="sicon">📅</span>
+        <span class="label">Abrir plano semanal</span>
+      </a>
+
+      <a class="shortcut pretty-card" href="listaCompras.html" aria-label="Abrir lista de compras">
+        <span class="sicon">🛒</span>
+        <span class="label">Lista de compras</span>
+        <span class="spacer"></span>
         <span id="badge-compras" class="pill" aria-label="Itens por comprar" aria-live="polite"></span>
       </a>
     </section>
-
-    <!-- Hoje no plano -->
-    <section class="card today-plan" aria-live="polite">
-      <div class="tp-header">
-        <h3>Hoje no plano</h3>
-        <a class="link" href="calendario.html">Ver semana</a>
-      </div>
-      <div id="tp-conteudo" class="tp-grid"><!-- JS preenche --></div>
-    </section>
-
-    <!-- Receita do dia -->
-    <section class="card recipe-of-day" aria-live="polite">
-      <div class="rod-header">
-        <h3>Receita do dia</h3>
-        <button id="btn-surpreende" class="btn" type="button">Surpreende-me</button>
-      </div>
-      <div id="rod-conteudo"><!-- JS preenche --></div>
-    </section>
-
-    <!-- Recentes -->
-    <section class="card recent" aria-live="polite">
-      <h3>Recentes</h3>
-      <div id="recent-grid" class="recent-grid"><!-- JS preenche --></div>
-      <a class="link" href="receitas.html">Ver todas</a>
-    </section>
   </main>
 
-  <!-- Estilos rápidos do dashboard (podes mover para style.css) -->
-  <style>
-    #dashboard{
-      margin:24px 40px;
-      padding:0 0 40px;
-    }
-    .dash-top{display:flex;gap:16px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:16px}
-    .dash-top h2{margin:0}
-    #quick-search{display:flex;gap:10px;align-items:center}
-    #quick-search input{padding:10px 12px;border:1.5px solid #ffb74d;border-radius:10px;font-weight:600;background:#fffde7}
-    .btn{border:0;border-radius:28px;padding:10px 16px;font-weight:800;cursor:pointer;background:#ffcc80;color:#4e342e;box-shadow:0 2px 6px rgba(0,0,0,.08)}
-    .btn:hover{filter:brightness(1.03)}
-    .btn--brand{background:#4caf50;color:#fff}
-    .btn--big{padding:14px 18px}
-    .pill{display:inline-block;margin-left:8px;min-width:22px;padding:2px 8px;border-radius:999px;background:#e57373;color:#fff;text-align:center;font-weight:800}
-    .card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:16px 18px;margin-bottom:18px}
-    .shortcuts{display:flex;gap:12px;flex-wrap:wrap}
-    .rod-header,.tp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-    .recent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-    .recent-item{display:flex;gap:10px;align-items:center;background:#fffde7;border:1px solid #ffcc80;border-radius:10px;padding:10px;cursor:pointer}
-    .recent-item:focus{outline:3px solid #4caf50; outline-offset:2px}
-    .recent-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover}
-    .link{display:inline-block;margin-top:10px;font-weight:700;text-decoration:none;color:#4e342e}
-    .tp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-    .tp-card{background:#fffde7;border:1px solid #ffcc80;border-radius:10px;padding:10px}
-    .tp-card h4{margin:0 0 6px}
-    .tp-card a{font-weight:700;text-decoration:none}
-    .thumb{width:90px;height:90px;border-radius:10px;object-fit:cover}
-    @media (max-width:640px){ #quick-search button{display:none} }
-  </style>
+  <script type="module">
+    import { auth, loginEmail, logout, getShoppingList } from './firebase.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
-  <!-- Lógica do dashboard -->
-  <script>
-    // Chaves/Helpers
-    const LS_REC   = 'mealmaster_receitas';
-    const LS_PLANO = 'mealmaster_planoSemanal';
-    const LS_LISTA = 'mealmaster_listaCompras';
+    const authBox = document.getElementById('authBox');
+    const dashboardBox = document.getElementById('dashboard');
+    const emailIn = document.getElementById('email');
+    const passIn  = document.getElementById('pass');
+    const actions = document.getElementById('authActions');
+    const userEmail = document.getElementById('userEmail');
+    const userEmailTop = document.getElementById('userEmailTop');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const logoutTop = document.getElementById('logoutTop');
 
-    const FALLBACK_IMG = 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=400&q=60';
+    const badgeCompras = document.getElementById('badge-compras');
 
-    function lerLivro(){
+    let UID=null, LISTA=[];
+    const lerLista = () => (Array.isArray(LISTA) ? LISTA : []);
+
+    function readListFromLS(){
       try{
-        const raw = localStorage.getItem(LS_REC);
-        const arr = raw ? JSON.parse(raw) : null;
-        if (Array.isArray(arr) && arr.length) return arr;
-      }catch{}
-      return [];
-    }
-    function lerPlano(){
-      try{ return JSON.parse(localStorage.getItem(LS_PLANO)) || {}; }catch{ return {}; }
+        const obj = JSON.parse(localStorage.getItem('mealmaster_listaCompras')) || {};
+        return Object.values(obj).flat().map(i=>({
+          nome:i?.nome||'', quantidade:i?.quantidade||'', comprado:!!i?.comprado, src:i?.src??null, key:i?.key??null
+        }));
+      }catch{ return []; }
     }
 
-    /* === NOVO: lista plana + migração do formato antigo === */
-    function lerLista(){
-      try{
-        const raw = localStorage.getItem(LS_LISTA);
-        const data = raw ? JSON.parse(raw) : [];
-        if (Array.isArray(data)) return data;                 // formato novo (array)
-        if (data && typeof data === 'object') {               // migração do antigo (por categorias)
-          return Object.values(data).flat().map(i => ({
-            nome: i.nome || '', quantidade: i.quantidade || '', comprado: !!i.comprado
-          }));
-        }
-      }catch{}
-      return [];
+    function renderBadge(){
+      const src = lerLista();
+      const base = Array.isArray(src)&&src.length ? src : readListFromLS();
+      const pendentes = base.filter(i=>!i.comprado).length;
+      badgeCompras.textContent = pendentes ? pendentes : '';
+      badgeCompras.style.display = pendentes ? 'inline-block' : 'none';
     }
+    window.addEventListener('storage', ev=>{ if(ev.key==='mealmaster_listaCompras') renderBadge(); });
 
-    function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-
-    // Link de detalhe: se tiver id, vai direto a receita.html?id=…; senão, abre receitas com query
-    function recipeLink(r){
-      return (r && r.id != null) ? `receita.html?id=${encodeURIComponent(r.id)}`
-                                 : `receitas.html?q=${encodeURIComponent(r?.titulo||'')}`;
-    }
-
-    // ---- Pesquisa rápida
-    document.getElementById('quick-search').addEventListener('submit', (e)=>{
+    // pesquisa rápida
+    document.getElementById('quick-search')?.addEventListener('submit', e=>{
       e.preventDefault();
-      const q = (document.getElementById('qs-input').value || '').trim();
-      const url = q ? `receitas.html?q=${encodeURIComponent(q)}` : 'receitas.html';
-      location.href = url;
+      const q=(document.getElementById('qs-input').value||'').trim();
+      location.href = q ? `receitas.html?q=${encodeURIComponent(q)}` : 'receitas.html';
     });
-
-    // Sugestões no datalist
-    (function fillDatalist(){
-      const dl = document.getElementById('qs-sugestoes');
-      const titulos = lerLivro().map(r=>r.titulo);
-      dl.innerHTML = titulos.slice(-30).reverse().map(t=>`<option value="${t}">`).join('');
-    })();
-
-    // ---- Badge com itens por comprar (usa lista plana)
-    (function renderBadge(){
-      const lista = lerLista(); // array [{nome, quantidade, comprado}]
-      const pendentes = lista.filter(i => !i.comprado).length;
-      const badge = document.getElementById('badge-compras');
-      badge.textContent = pendentes ? pendentes : '';
-      badge.style.display = pendentes ? 'inline-block' : 'none';
-    })();
-
-    // ---- Hoje no plano
-    function refeicoesSelecionadas(){
-      try{
-        const raw = localStorage.getItem('refeicoesSelecionadas');
-        const arr = raw ? JSON.parse(raw) : null;
-        if (Array.isArray(arr) && arr.length) {
-          const map = {'pequeno-almoco':'Pequeno almoço','almoco':'Almoço','lanche':'Lanche','jantar':'Jantar','ceia':'Ceia'};
-          return arr.map(k => map[k]).filter(Boolean);
-        }
-      }catch{}
-      return ['Pequeno almoço','Almoço','Lanche','Jantar','Ceia'];
-    }
-    function tipoKeyFromLabel(lbl){
-      return ({'Pequeno almoço':'pequeno-almoco','Almoço':'almoco','Lanche':'lanche','Jantar':'jantar','Ceia':'ceia'}[lbl] || 'almoco');
-    }
-    function getTodayKey(){
-      const d = new Date();
-      const y = d.toISOString().slice(0,10); // yyyy-mm-dd
-      return y;
-    }
-    function renderHojeNoPlano(){
-      const plano = lerPlano();
-      const refeicoes = refeicoesSelecionadas();
-      const hojeKey = getTodayKey();
-      const livro = lerLivro();
-      const byName = Object.fromEntries(livro.map(r => [r.titulo, r]));
-
-      const box = document.getElementById('tp-conteudo');
-      box.innerHTML = '';
-
-      const obj = plano[hojeKey] || {};
-      let found = 0;
-
-      refeicoes.forEach(rotulo => {
-        const nome = obj[rotulo];
-        if (!nome || nome === '__NAO__') return;
-        found++;
-
-        const r = byName[nome] || livro.find(x=>x.titulo===nome) || {titulo:nome, img:FALLBACK_IMG};
-        const a = document.createElement('article');
-        a.className = 'tp-card';
-        a.innerHTML = `
-          <h4>${rotulo}</h4>
-          <div style="display:flex; gap:10px; align-items:center;">
-            <img class="thumb" src="${r.img||FALLBACK_IMG}" alt="Imagem de ${r.titulo}" />
-            <div>
-              <div style="font-weight:800;margin-bottom:6px">${r.titulo}</div>
-              <a href="${recipeLink(r)}" aria-label="Abrir receita ${r.titulo}">Abrir</a>
-            </div>
-          </div>
-        `;
-        box.appendChild(a);
-      });
-
-      if(!found){
-        box.innerHTML = `<p class="empty">Ainda não tens receitas para hoje. <a class="link" href="calendario.html">Escolher no plano</a></p>`;
-      }
+    function fillDatalist(){
+      document.getElementById('qs-sugestoes').innerHTML='';
     }
 
-    // ---- Receita do dia (robusta quando não há receitas)
-    function renderRod(){
-      const livro = lerLivro();
-      const el = document.getElementById('rod-conteudo');
+    document.getElementById('loginForm')?.addEventListener('submit', async e=>{
+      e.preventDefault();
+      try{ await loginEmail(emailIn.value.trim(), passIn.value); emailIn.value=''; passIn.value=''; }
+      catch(err){ alert((err.message||'').replace('Firebase:','').trim()); }
+    });
+    const doLogout=()=>logout();
+    document.getElementById('logoutBtn')?.addEventListener('click',doLogout);
+    document.getElementById('logoutTop')?.addEventListener('click',doLogout);
 
-      if (!livro.length){
-        el.innerHTML = `<p class="empty">Sem receitas ainda. <a class="link" href="receitas.html">Adicionar a primeira</a></p>`;
-        return;
-      }
-      const r = pickRandom(livro);
-      el.innerHTML = `
-        <div style="display:flex; gap:12px; align-items:center;">
-          <img src="${r.img||FALLBACK_IMG}" alt="Imagem de ${r.titulo}" class="thumb">
-          <div>
-            <h4 style="margin:0 0 6px 0;">${r.titulo}</h4>
-            <a class="btn btn--brand" href="${recipeLink(r)}" aria-label="Abrir receita ${r.titulo}">Ver receita</a>
-          </div>
-        </div>`;
-    }
-    document.getElementById('btn-surpreende').addEventListener('click', renderRod);
+    onAuthStateChanged(auth, async u=>{
+      const logged=!!u;
 
-    // ---- Recentes (últimas 4 do “livro”)
-    function renderRecentes(){
-      const livro = lerLivro().slice(-4).reverse();
-      const box = document.getElementById('recent-grid');
+      if(logged){ authBox.hidden=true; authBox.style.display='none'; dashboardBox.hidden=false; dashboardBox.style.display=''; }
+      else{ authBox.hidden=false; authBox.style.display=''; dashboardBox.hidden=true; dashboardBox.style.display='none'; }
 
-      if(!livro.length){
-        box.innerHTML = `<p class="empty">Ainda não tens receitas. <a class="link" href="receitas.html">Adicionar a primeira</a></p>`;
-        return;
-      }
+      if(actions) actions.hidden=!logged;
 
-      box.innerHTML = '';
-      livro.forEach(r=>{
-        const card = document.createElement('article');
-        card.className = 'recent-item';
-        card.innerHTML = `
-          <img class="recent-thumb" src="${r.img||FALLBACK_IMG}" alt="Imagem de ${r.titulo}">
-          <div>
-            <div style="font-weight:800">${r.titulo}</div>
-            <span class="link" aria-hidden="true">Abrir</span>
-          </div>
-        `;
-        const go = () => location.href = recipeLink(r);
-        card.setAttribute('role','button');
-        card.tabIndex = 0;
-        card.addEventListener('click', go);
-        card.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); go(); }});
-        box.appendChild(card);
-      });
-    }
+      logoutTop.style.display = logged ? 'inline-block' : 'none';
+      userEmailTop.textContent = logged ? (u?.email || '') : '';
+      userEmail.textContent    = logged ? (u?.email || '') : '';
 
-    // init
-    renderHojeNoPlano();
-    renderRod();
-    renderRecentes();
+      if(!logged) return;
+
+      UID=u.uid;
+
+      // Só buscamos a LISTA
+      const lista = await getShoppingList(UID).catch(()=>[]);
+      const arrFS = Array.isArray(lista) ? lista : (Array.isArray(lista?.items) ? lista.items : []);
+      LISTA = arrFS.length ? arrFS : readListFromLS();
+
+      renderBadge();
+      fillDatalist();
+    });
   </script>
 </body>
 </html>

@@ -6,15 +6,12 @@
   <title>Receitas - MealMaster</title>
 
   <link rel="stylesheet" href="style.css" />
-  <script src="seed.js" defer></script>
-
-
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#fffde7; color:#4e342e; margin:0; }
-    header { padding:20px 30px; background:#4caf50; color:#fff; display:flex; justify-content:space-between; align-items:center; }
-    header h1 { margin:0; font-weight:700; }
 
-    main { max-width: 1100px; margin: 30px auto; padding: 20px 40px; }
+    /* ↑ alargado para caberem 4 cards confortavelmente */
+    main { max-width: 1280px; margin: 30px auto; padding: 20px 40px; }
+
     .toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
     .toolbar h2 { margin:0; }
     .toolbar .actions { display:flex; gap:10px; flex-wrap:wrap; }
@@ -34,15 +31,25 @@
     .tipo-receita button.active, .tipo-receita button:hover { background:#4caf50; color:#fff; }
     input[type="text"], input[type="url"] { padding:8px 12px; border-radius:8px; border:1.5px solid #ffb74d; font-weight:600; color:#4e342e; width:100%; box-sizing:border-box; background:#fffde7;}
     textarea { width:100%; border:1.5px solid #ffb74d; border-radius:8px; padding:8px 12px; font-weight:600; color:#4e342e; background:#fffde7; box-sizing:border-box; }
-    .tags { max-height:100px; overflow-y:auto; background:#fffde7; border-radius:8px; padding:8px 12px; border:1.5px solid #ffb74d; display:flex; flex-wrap:wrap; gap:8px; }
+
+    /* ===== TAGS ===== */
+    .tags{ display:flex; flex-wrap:wrap; gap:8px; max-height:120px; overflow:auto; }
+    #lista-tags:empty{ display:none; }
+    #lista-tags:not(:empty){ padding:8px 12px; border:1.5px solid #ffb74d; border-radius:8px; background:#fffde7; }
     .tag { background:#4caf50; color:#fff; padding:6px 12px; border-radius:20px; cursor:pointer; user-select:none; font-weight:600; }
     .tag.selected { background:#1b5e20; }
 
+    /* ===== GRELHA: 3–4 por linha em desktop; responsiva ↓ ===== */
     .receitas-grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap:20px;
-    }    
+    }
+    /* força 4 colunas quando houver espaço suficiente */
+    @media (min-width: 1200px){
+      .receitas-grid{ grid-template-columns: repeat(4, 1fr); }
+    }
+
     .receita-card { background:#fff; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,.1); overflow:hidden; position:relative; }
     .receita-img { width:100%; height:150px; object-fit:cover; background:#fffde7; }
     .receita-body { padding:12px 12px 14px; }
@@ -50,7 +57,6 @@
     .r-meta { font-size:.9rem; color:#6d4c41; opacity:.85; }
     .card-actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap}
 
-    /* Modal */
     .modal-bg{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.35); z-index:999}
     .modal-bg.active{display:flex}
     .modal{background:#fffde7; border-radius:16px; width:min(800px,94vw); padding:18px 18px 16px; box-shadow:0 10px 30px rgba(0,0,0,.3)}
@@ -61,34 +67,40 @@
     @media (max-width:720px){ .grid-2{grid-template-columns:1fr} }
   </style>
 </head>
+
+
 <body>
 
-  <!-- Cabeçalho padrão -->
   <header>
     <h1>MealMaster</h1>
     <a href="perfil.html" class="profile-icon" title="Abrir perfil" aria-label="Abrir perfil">👤</a>
   </header>
 
-  <!-- MENU padronizado (todos em minúsculas) -->
   <nav class="sidebar" role="navigation" aria-label="Menu principal">
     <a href="index.html"     data-route="index.html">Menu Principal</a>
-    <a href="receitas.html"      data-route="receitas.html">Receitas</a>
-    <a href="calendario.html"    data-route="calendario.html">Plano Semanal</a>
-    <a href="listaCompras.html"  data-route="listaCompras.html">Lista de Compras</a>
+    <a href="receitas.html"  data-route="receitas.html">Receitas</a>
+    <a href="calendario.html"data-route="calendario.html">Plano Semanal</a>
+    <a href="listaCompras.html" data-route="listaCompras.html">Lista de Compras</a>
     <a href="configuracoes.html" data-route="configuracoes.html">Configurações</a>
   </nav>
 
   <script>
-    // ativa o link atual no menu
+    // ativa link atual no menu
     (function () {
       const here = location.pathname.split('/').pop() || 'index.html';
       document.querySelectorAll('.sidebar a').forEach(a => {
         if (a.getAttribute('data-route') === here) {
-          a.classList.add('active');
-          a.setAttribute('aria-current', 'page');
+          a.classList.add('active'); a.setAttribute('aria-current', 'page');
         }
       });
     })();
+  </script>
+
+  <!-- redireciona não autenticados -->
+  <script type="module">
+    import { auth } from './firebase.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    onAuthStateChanged(auth, (u)=>{ if(!u) location.href='index.html'; });
   </script>
 
   <main>
@@ -127,7 +139,7 @@
     <section class="receitas-grid" aria-live="polite" aria-atomic="true"></section>
   </main>
 
-  <!-- MODAL: criar/editar receita -->
+  <!-- MODAL -->
   <div class="modal-bg" id="modal-bg">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <h3 id="modalTitle">Nova Receita</h3>
@@ -174,33 +186,28 @@
     </div>
   </div>
 
-  <script>
-    // ================== storage helpers ==================
-    const LS_KEY = 'mealmaster_receitas';
+  <!-- LÓGICA: Firestore-only -->
+  <script type="module">
+    import { auth, getAllRecipes, saveRecipe, deleteRecipe } from './firebase.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
-    const exemplos = [
-      {id:1,titulo:'Panquecas de Aveia',tipo:'pequeno-almoco',tags:['vegetariano','rápido'],img:'https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=400&q=60'},
-      {id:2,titulo:'Salada de Grão',tipo:'almoco',tags:['vegano','glúten'],img:'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=60'},
-      {id:3,titulo:'Sopa de Abóbora',tipo:'jantar',tags:['vegetariano','sem lactose'],img:'https://images.unsplash.com/photo-1543352634-02fcb9db8f1e?auto=format&fit=crop&w=400&q=60'},
-      {id:4,titulo:'Tosta de Abacate',tipo:'lanche',tags:['vegan','rápido'],img:'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=400&q=60'},
-      {id:5,titulo:'Bife com Legumes',tipo:'jantar',tags:['alto proteína'],img:'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=400&q=60'}
-    ];
+    const FALLBACK_IMG = 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=400&q=60';
 
-    function lerLivro() {
-      try { const raw = localStorage.getItem(LS_KEY); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr)?arr:[]; }
-      catch { return []; }
+    let UID = null;
+    let cacheLivro = [];
+
+    async function carregarLivro(){
+      cacheLivro = await getAllRecipes(UID);
+      return cacheLivro;
     }
-    function guardarLivro(arr) {
-      localStorage.setItem(LS_KEY, JSON.stringify(arr));
-    }
+    const obterReceitas = () => cacheLivro;
 
-    // ================== refs UI ==================
+    // ======= Refs UI =======
     const listaTags = document.getElementById('lista-tags');
     const receitasGrid = document.querySelector('.receitas-grid');
     const filtroAlergias = document.getElementById('filtro-alergias');
     const tipoBtns = document.querySelectorAll('.tipo-receita button');
     const pesquisaTagsInput = document.getElementById('pesquisa-tags');
-    const btnNova = document.getElementById('btn-nova-receita');
 
     const modalBg = document.getElementById('modal-bg');
     const form = document.getElementById('form-receita');
@@ -213,17 +220,13 @@
     const btnCancelar = document.getElementById('btn-cancelar');
     const modalTitle = document.getElementById('modalTitle');
 
-    const tagsDisponiveis = [
-      'vegetariano','vegan','glúten','lactose','amendoim','baixo carboidrato',
-      'rápido','baixo custo','alta proteína','sem açúcar','sem lactose','pescatariano'
-    ];
+    const tagsDisponiveis = ['vegetariano','vegan','glúten','lactose','amendoim','baixo carboidrato','rápido','baixo custo','alta proteína','sem açúcar','sem lactose','pescatariano'];
 
     let filtroTipo = 'todos';
     const tagsSelecionadas = new Set();
-    // estado de edição
     let editId = null;
 
-    // ================== render tags ==================
+    // ======= Tags =======
     function renderizarTags(filtro = '') {
       listaTags.innerHTML = '';
       const f = filtro.toLowerCase();
@@ -244,11 +247,11 @@
         });
     }
 
-    // ================== obter base de dados ==================
-    function obterReceitas(){ return lerLivro(); }
+    // ======= Render grid =======
+    function traduzTipo(t){
+      return ({'pequeno-almoco':'Pequeno-almoço','almoco':'Almoço','lanche':'Lanche','jantar':'Jantar','ceia':'Ceia'}[t] || t);
+    }
 
-
-    // ================== render grid ==================
     function filtrarReceitas() {
       const alergias = filtroAlergias.value.toLowerCase().split(',').map(a=>a.trim()).filter(Boolean);
       const base = obterReceitas();
@@ -270,8 +273,7 @@
         const card = document.createElement('article');
         card.className = 'receita-card';
         card.innerHTML = `
-          <img src="${r.img || 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=400&q=60'}"
-              alt="Imagem da receita ${r.titulo}" class="receita-img" />
+          <img src="${r.img || FALLBACK_IMG}" alt="Imagem da receita ${r.titulo}" class="receita-img" />
           <div class="receita-body">
             <h3 class="receita-titulo">${r.titulo}</h3>
             <div class="r-meta">${traduzTipo(r.tipo)} · ${r.tags?.slice(0,3).join(', ') || 'sem tags'}</div>
@@ -282,45 +284,25 @@
           </div>
         `;
 
-        // ações (mantém) — impedir que o click nestes botões navegue
         card.querySelector('.btn-editar').addEventListener('click', (e) => {
-          e.stopPropagation();
-          abrirModalEditar(r);
+          e.stopPropagation(); abrirModalEditar(r);
         });
-        card.querySelector('.btn-eliminar').addEventListener('click', (e) => {
-          e.stopPropagation();
-          eliminarReceita(r.id);
+        card.querySelector('.btn-eliminar').addEventListener('click', async (e) => {
+          e.stopPropagation(); await eliminarReceita(r.id);
         });
 
-        // 👉 navegar para a página de detalhe ao clicar no card
-        card.addEventListener('click', () => {
-          location.href = `receita.html?id=${r.id}`;
-        });
-        // acessível por teclado
+        card.addEventListener('click', () => { location.href = `receita.html?id=${r.id}`; });
         card.setAttribute('role', 'button');
         card.tabIndex = 0;
         card.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            location.href = `receita.html?id=${r.id}`;
-          }
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); location.href = `receita.html?id=${r.id}`; }
         });
 
         receitasGrid.appendChild(card);
       });
     }
 
-    function traduzTipo(t){
-      return ({
-        'pequeno-almoco':'Pequeno-almoço',
-        'almoco':'Almoço',
-        'lanche':'Lanche',
-        'jantar':'Jantar',
-        'ceia':'Ceia'
-      }[t] || t);
-    }
-
-    // ================== modal criar/editar ==================
+    // ======= Modal criar/editar =======
     function abrirModalNovo(){
       editId = null;
       modalTitle.textContent = 'Nova Receita';
@@ -342,58 +324,64 @@
     }
     function fecharModal(){ modalBg.classList.remove('active'); }
 
-    btnNova.addEventListener('click', abrirModalNovo);
+    document.getElementById('btn-nova-receita').addEventListener('click', abrirModalNovo);
     btnCancelar.addEventListener('click', fecharModal);
     modalBg.addEventListener('click', (e)=>{ if(e.target===modalBg) fecharModal(); });
 
-    form.addEventListener('submit', (e)=>{
+    form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       const receita = {
-        id: editId || Date.now(),
+        id: editId || crypto.randomUUID(),
         titulo: fTitulo.value.trim(),
+        title:  fTitulo.value.trim(),
         tipo: fTipo.value,
         tags: (fTags.value||'').split(',').map(t=>t.trim()).filter(Boolean),
         img: fImg.value.trim(),
         ingredientes: fIng.value.trim(),
         passos: fPassos.value.trim()
       };
-      const livro = lerLivro();
-      const i = livro.findIndex(x=>x.id===receita.id);
-      if(i>=0) livro[i] = {...livro[i], ...receita};
-      else livro.push(receita);
-      guardarLivro(livro);
+      await saveRecipe(UID, receita);
       fecharModal();
+      await carregarLivro();
       filtrarReceitas();
     });
 
-    function eliminarReceita(id){
+    async function eliminarReceita(id){
       if(!confirm('Eliminar esta receita?')) return;
-      const livro = lerLivro().filter(r=>r.id!==id);
-      guardarLivro(livro);
+      await deleteRecipe(UID, id);
+      await carregarLivro();
       filtrarReceitas();
     }
 
-    // ================== filtros & querystring ==================
+    // ======= Filtros =======
     filtroAlergias.addEventListener('input', filtrarReceitas);
-    tipoBtns.forEach(btn=>{
+    document.querySelectorAll('.tipo-receita button').forEach(btn=>{
       btn.addEventListener('click', ()=>{
-        tipoBtns.forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.tipo-receita button').forEach(b=>b.classList.remove('active'));
         btn.classList.add('active');
         filtroTipo = btn.dataset.tipo;
         filtrarReceitas();
       });
     });
-    pesquisaTagsInput.addEventListener('input', (e)=> renderizarTags(e.target.value));
+    document.getElementById('pesquisa-tags').addEventListener('input', (e)=> renderizarTags(e.target.value));
 
-    // aplicar ?q= do index na pesquisa de tags
     (function aplicarQueryString(){
       const q = new URLSearchParams(location.search).get('q');
-      if(q){ pesquisaTagsInput.value = q; renderizarTags(q); }
+      if(q){ document.getElementById('pesquisa-tags').value = q; renderizarTags(q); }
     })();
 
-    // init
+    // ======= Boot (autenticado) =======
     renderizarTags();
     filtrarReceitas();
+
+    onAuthStateChanged(auth, async (u)=>{
+      if(!u) return; // redireciona já no script acima
+      UID = u.uid;
+      await carregarLivro();
+      renderizarTags();
+      filtrarReceitas();
+    });
   </script>
+
 </body>
 </html>

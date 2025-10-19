@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MealMaster - Calendário</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="seed.js"></script>
 
   <style>
     body { background:#fffde7; color:#4e342e; margin:0 }
@@ -19,15 +18,32 @@
     .btn--brand{background:linear-gradient(90deg,#ffb347,#ffcc33); color:#6d4c41; box-shadow:0 6px 14px rgba(255,179,71,.45)}
     .btn--brand:hover{filter:brightness(1.06)}
     .btn--ghost{background:#fffde7;border:1.5px solid #ffb74d}
-    .btn--danger{background:#e57373;color:#fff}
 
     table.calendario { width:100%; border-collapse:collapse; table-layout:fixed; font-size:.95rem; user-select:none; background:#fff }
     table.calendario th, table.calendario td { border:1px solid #d7ccc8; padding:12px 8px; text-align:center; vertical-align:middle; min-width:90px; max-width:130px; }
     table.calendario th { background:#ffcc80; color:#4e342e; position:sticky; top:0 }
     table.calendario tbody tr:nth-child(odd) { background:#fffdf3; }
-    .slot { background:#ffecb3; border-radius:8px; padding:6px; cursor:pointer; box-shadow:0 2px 5px rgba(255,179,71,.5); transition:background-color .25s; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-    .slot:hover { background:#ffe082; }
-    .slot.nao { background:#eee; color:#888; font-style:italic }
+
+    /* === Botões das células com o mesmo look dos ghost buttons === */
+    .slot { 
+      display:block; width:100%;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      border-radius:12px;       /* ligeiro ajuste para caber na célula */
+      padding:10px 12px;        /* igual ao .btn */
+      background:#fffde7;       /* igual ao .btn--ghost */
+      border:1.5px solid #ffb74d;
+      box-shadow:0 2px 6px rgba(0,0,0,.08);
+      color:#4e342e;
+      cursor:pointer;
+    }
+    .slot:hover { filter:brightness(1.02); }
+    .slot.nao {
+      background:#eee !important; 
+      color:#888 !important; 
+      border-color:#ddd !important; 
+      font-style:italic;
+      box-shadow:none;
+    }
 
     .btn-completar { margin-top:10px; background:linear-gradient(90deg,#ffb347,#ffcc33); border:none; padding:12px 22px; border-radius:30px; font-size:1rem; font-weight:800; color:#6d4c41; cursor:pointer; box-shadow:0 5px 12px rgba(255,179,71,.7); }
 
@@ -72,7 +88,6 @@
   </nav>
 
   <script>
-    // ativa nav
     (function () {
       const here = location.pathname.split('/').pop() || 'index.html';
       document.querySelectorAll('.sidebar a').forEach(a => {
@@ -81,28 +96,26 @@
     })();
   </script>
 
-  <main>
+  <main id="page" hidden>
     <div class="calendario-header">
-      <button id="prevWeek" aria-label="Semana anterior">&lt;</button>
+      <button id="prevWeek" aria-label="Semana anterior" type="button">&lt;</button>
       <div id="semanaAtual"></div>
-      <button id="nextWeek" aria-label="Semana seguinte">&gt;</button>
+      <button id="nextWeek" aria-label="Semana seguinte" type="button">&gt;</button>
     </div>
 
     <div class="toolbar">
-      <button class="btn btn--ghost" id="btnExportar">Exportar semana (PDF)</button>
-      <button class="btn btn--brand" id="btnGerarCompras">Gerar lista de compras</button>
+      <button class="btn btn--ghost" id="btnExportar" type="button">Exportar semana (PDF)</button>
+      <button class="btn btn--brand" id="btnGerarCompras" type="button">Gerar lista de compras</button>
     </div>
 
     <table class="calendario" aria-label="Calendário semanal">
       <thead>
-        <tr id="cal-head-row">
-          <!-- preenchido por JS de acordo com weekStart -->
-        </tr>
+        <tr id="cal-head-row"></tr>
       </thead>
       <tbody id="calendarioCorpo"></tbody>
     </table>
 
-    <button class="btn-completar" id="btnCompletar">Completar cardápio semanal</button>
+    <button class="btn-completar" id="btnCompletar" type="button">Gerar receitas aleatórias</button>
   </main>
 
   <!-- Modal -->
@@ -122,50 +135,58 @@
     </div>
   </div>
 
+  <!-- === SCRIPT PRINCIPAL === -->
   <script>
-    // ——— exemplos fallback
-    const receitasExemplo = [
-      {id:1,titulo:"Ovos mexidos",tipo:'pequeno-almoco', ingredientes:"- ovos\n- manteiga\n- sal"},
-      {id:2,titulo:"Panquecas",tipo:'pequeno-almoco', ingredientes:"- farinha\n- ovo\n- leite"},
-      {id:3,titulo:"Salada de quinoa",tipo:'almoco', ingredientes:"- quinoa\n- tomate\n- pepino"},
-      {id:4,titulo:"Sopa de legumes",tipo:'jantar', ingredientes:"- legumes variados\n- água\n- sal"},
-      {id:5,titulo:"Sanduíche natural",tipo:'lanche', ingredientes:"- pão\n- fiambre\n- queijo"},
-      {id:6,titulo:"Frango grelhado",tipo:'jantar', ingredientes:"- peito de frango\n- sal\n- azeite"},
-      {id:7,titulo:"Iogurte com frutas",tipo:'ceia', ingredientes:"- iogurte\n- fruta"},
-      {id:8,titulo:"Tosta mista",tipo:'lanche', ingredientes:"- pão\n- fiambre\n- queijo"},
-      {id:9,titulo:"Sushi vegetariano",tipo:'jantar', ingredientes:"- arroz sushi\n- alga nori\n- vegetais"},
-      {id:10,titulo:"Batata doce assada",tipo:'jantar', ingredientes:"- batata doce\n- azeite\n- sal"}
-    ];
-
-    // LocalStorage keys
+    // ------- Constantes de armazenamento -------
     const LS_RULES = 'mealmaster_regrasPlano';
     const LS_REC   = 'mealmaster_receitas';
     const LS_PLANO = 'mealmaster_planoSemanal';
     const LS_LISTA = 'mealmaster_listaCompras';
     const LS_LOCALE= 'mealmaster_locale';
+    const NAO = '__NAO__'; // sentinela para "não cozinhar"
 
-    // util
+    // ------- Helpers de texto/consulta -------
     const splitComma = (s) => (s || '').toLowerCase().split(/[;,]/).map(x => x.trim()).filter(Boolean);
-    const matchesAny = (txt, words) => {
-      const t = (txt || '').toLowerCase();
-      return words.some(w => t.includes(w));
-    };
+    const matchesAny = (txt, words) => { const t = (txt || '').toLowerCase(); return words.some(w => t.includes(w)); };
     const recipeMatches = (r, words) => matchesAny(r.titulo, words) || matchesAny((r.tags || []).join(' '), words);
 
+    // ------- Leitura de preferências/locale -------
     function loadRules(){ try { return JSON.parse(localStorage.getItem(LS_RULES)) || {}; } catch { return {}; } }
     function loadLocale(){ try { return JSON.parse(localStorage.getItem(LS_LOCALE)) || null; } catch { return null; } }
 
-    // Hemisfério & sazonalidade
+    // ------- Datas estáveis (local) -------
+    function ymdLocal(d){
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const da = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${da}`;
+    }
+    function getWeekStart(date){
+      const rules = loadRules() || {};
+      const start = (rules.weekStart || 'mon'); // 'mon' (default) ou 'sun'
+      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate()); // meia-noite local
+      const dow = d.getDay();
+      let diff;
+      if (start === 'sun') diff = -dow;           // até domingo
+      else diff = (dow === 0 ? -6 : 1 - dow);     // até segunda
+      d.setDate(d.getDate() + diff);
+      return d;
+    }
+    function daysOrder(){ return (loadRules().weekStart==='sun') ? [0,1,2,3,4,5,6] : [1,2,3,4,5,6,0]; }
+    function weekdayLabel(idx){ return ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][idx]; }
+    function formatDate(d){ return d.toLocaleDateString('pt-PT',{ day:'2-digit', month:'short' }); }
+
+    // ------- Estação/Hemisfério -------
     function currentHemisphere(){ const loc = loadLocale(); return (loc && loc.hemisphere) || 'N'; }
     function isSummerWinter(date){
-      const m = date.getMonth(); // 0=Jan
-      let isVerao   = (m>=5 && m<=8);              // Jun–Set
-      let isInverno = (m===11 || m<=1);            // Dez–Fev
+      const m = date.getMonth();
+      let isVerao   = (m>=5 && m<=8);
+      let isInverno = (m===11 || m<=1);
       if(currentHemisphere()==='S'){ const v=isVerao; isVerao=isInverno; isInverno=v; }
       return {isVerao, isInverno};
     }
 
-    // Refeições
+    // ------- Perfil: refeições visíveis -------
     function lerRefeicoesDoPerfil(){
       try {
         const salvo = JSON.parse(localStorage.getItem('refeicoesSelecionadas'));
@@ -178,138 +199,36 @@
     }
     let refeicoes = lerRefeicoesDoPerfil();
 
-    // helpers receitas/plano/lista
+    // ------- Fonte de receitas (Firestore -> fallback LS) -------
     function lerLivroReceitas(){
+      if (Array.isArray(window._livroFS) && window._livroFS.length) return window._livroFS;
       try{
         const raw = localStorage.getItem(LS_REC);
-        const arr = raw? JSON.parse(raw) : [];
-        if(Array.isArray(arr) && arr.length) return arr;
-      }catch(e){}
-      return receitasExemplo;
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      }catch(e){ return []; }
     }
+
+    // ------- Plano / Lista -------
     function lerPlano(){ try{ return JSON.parse(localStorage.getItem(LS_PLANO)) || {}; }catch{ return {}; } }
     function gravarPlano(p){ localStorage.setItem(LS_PLANO, JSON.stringify(p)); }
     function lerLista(){ try{ return JSON.parse(localStorage.getItem(LS_LISTA)) || {}; }catch{ return {}; } }
     function gravarLista(o){ localStorage.setItem(LS_LISTA, JSON.stringify(o)); }
 
     const tipoKeyFromLabel = (lbl) => ({
-      'Pequeno almoço':'pequeno-almoco',
-      'Almoço':'almoco',
-      'Lanche':'lanche',
-      'Jantar':'jantar',
-      'Ceia':'ceia'
+      'Pequeno almoço':'pequeno-almoco','Almoço':'almoco','Lanche':'lanche','Jantar':'jantar','Ceia':'ceia'
     }[lbl] || 'almoco');
 
     let planoSemanal = lerPlano();
-
-    // Semana com início configurável
-    function getWeekStart(d){
-      const rules = loadRules() || {};
-      const start = (rules.weekStart || 'mon'); // 'mon'|'sun'
-      d = new Date(d);
-      const dow = d.getDay(); // 0 Dom..6 Sáb
-      if(start === 'sun'){
-        const diff = d.getDate() - dow; // volta até Domingo
-        return new Date(d.setDate(diff));
-      } else {
-        const diff = d.getDate() - dow + (dow===0 ? -6 : 1); // vai até Segunda
-        return new Date(d.setDate(diff));
-      }
-    }
-    function daysOrder(){ // devolve array de 0..6 com início em weekStart
-      return (loadRules().weekStart==='sun')
-        ? [0,1,2,3,4,5,6]
-        : [1,2,3,4,5,6,0];
-    }
-    function weekdayLabel(idx){
-      const map = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-      return map[idx];
-    }
-    function formatDate(d){ return d.toLocaleDateString('pt-PT',{ day:'2-digit', month:'short' }); }
-
-    // Regras de escolha base (sem rotação/limites)
-    function applyRulesToCandidates(candidatas, tipoKey, date, rules){
-      if(!Array.isArray(candidatas) || !candidatas.length) return [];
-
-      const {isVerao, isInverno} = isSummerWinter(date);
-      const dow = date.getDay();
-
-      const meals = rules.meals || {};
-      const mealRule = meals[tipoKey] || {};
-      const preferWords = splitComma(mealRule.prefer);
-
-      const season = rules.season || {};
-      const sazVerao   = isVerao   ? splitComma(season.verao)   : [];
-      const sazInverno = isInverno ? splitComma(season.inverno) : [];
-
-      const meatless = rules.meatless || {days:[], allowFish:true};
-      const isMeatlessDay = Array.isArray(meatless.days) && meatless.days.includes(dow);
-      const meatWords = ['carne','bife','vaca','porco','frango','peru','enchido','salsicha','presunto','fiambre'];
-      const fishWords = ['peixe','atum','bacalhau','salmão','pescada','sardinha','dourada','robalo','marisco','camarão'];
-
-      const extraLightForDinner = (tipoKey==='jantar' && mealRule.light) ? ['sopa','salada','peixe','grelhado','legumes'] : [];
-
-      // filtra “sem carne”
-      let out = candidatas.filter(r => {
-        if(!isMeatlessDay) return true;
-        if(meatless.allowFish){
-          const isMeat = recipeMatches(r, meatWords);
-          const isFish = recipeMatches(r, fishWords);
-          return !isMeat || isFish;
-        }
-        return !recipeMatches(r, meatWords) && !recipeMatches(r, fishWords);
-      });
-
-      // dedupe por título
-      out = Array.from(new Map(out.map(r => [r.titulo.toLowerCase(), r])).values());
-
-      // prioriza preferências + sazonalidade
-      const priorityWords = [...preferWords, ...extraLightForDinner, ...sazVerao, ...sazInverno];
-      if(priorityWords.length){
-        const preferidas = out.filter(r => recipeMatches(r, priorityWords));
-        if(preferidas.length) out = preferidas;
-      }
-
-      return out;
-    }
-
-    // Rotação e limites semanais
-    function usedRecentlyTitles(days){
-      if(!days) return new Set();
-      const plano = lerPlano();
-      const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-days);
-      const set = new Set();
-      Object.entries(plano).forEach(([iso,obj])=>{
-        const d = new Date(iso);
-        if(d >= cutoff){
-          Object.values(obj||{}).forEach(nome => { if(nome && nome !== '__NAO__') set.add(nome); });
-        }
-      });
-      return set;
-    }
-    function inferGroup(rec){
-      const t = ((rec.titulo||'') + ' ' + (rec.tags||[]).join(' ')).toLowerCase();
-      if(/massa|massada|esparguete|espaguete|penne|macarr|gnoc|tagliat/i.test(t)) return 'massa';
-      if(/peixe|atum|bacalhau|salm[aã]o|pescad|dourada|robalo|sardinh|marisc|camar/i.test(t)) return 'peixe';
-      if(/carne|bife|vaca|porco|frango|peru|entrecote|picanha|almondeg|salsich/i.test(t)) return 'carne';
-      if(/sopa|caldo|creme/i.test(t)) return 'sopa';
-      if(/salada|salad bowl|gaspacho/i.test(t)) return 'salada';
-      return 'outros';
-    }
-
-    // Construção do calendário
     let dataAtual = new Date();
 
     function buildHeadRow(startDate){
       const tr = document.getElementById('cal-head-row');
       tr.innerHTML = '';
       const th0 = document.createElement('th'); th0.textContent = 'Refeição / Dia'; tr.appendChild(th0);
-
       const order = daysOrder();
       for(const dow of order){
         const d = new Date(startDate);
-        // alinhar índice: se startDate não é o dow desejado, avança até lá
-        // (startDate já é Sunday ou Monday; somar deslocamento relativo)
         const delta = (dow - startDate.getDay() + 7) % 7;
         d.setDate(startDate.getDate()+delta);
         const th = document.createElement('th');
@@ -340,21 +259,20 @@
           const d = new Date(start);
           const delta = (dow - start.getDay() + 7) % 7;
           d.setDate(start.getDate()+delta);
-          const diaKey = d.toISOString().slice(0,10);
+          const diaKey = ymdLocal(d);
 
           const td = document.createElement('td');
-          const slot = document.createElement('div');
-          slot.className = 'slot';
-          slot.tabIndex = 0; slot.setAttribute('role','button');
+          const slot = document.createElement('button');
+          slot.type = 'button';
+          slot.className = 'slot btn btn--ghost';
           slot.setAttribute('aria-label', `${refeicao} de ${weekdayLabel(dow)}, editar`);
 
           const receita = (planoSemanal[diaKey] && planoSemanal[diaKey][refeicao]) || '';
-          const nao = receita === '__NAO__';
+          const nao = receita === NAO;
           slot.textContent = nao ? '— não cozinhar —' : (receita || '+ adicionar');
           if(nao) slot.classList.add('nao'); else slot.classList.remove('nao');
 
-          slot.onclick = () => abrirModal(diaKey, refeicao);
-          slot.onkeydown = (e) => { if(e.key==='Enter' || e.key===' ') abrirModal(diaKey, refeicao); };
+          slot.addEventListener('click', () => abrirModal(diaKey, refeicao));
 
           td.appendChild(slot); tr.appendChild(td);
         }
@@ -362,7 +280,7 @@
       }
     }
 
-    // Modal
+    // ------- Modal refs -------
     const modal = document.getElementById('modalEdit');
     const inputReceita = document.getElementById('inputReceita');
     const datalist = document.getElementById('listaReceitas');
@@ -387,13 +305,24 @@
       });
 
       const atual = (planoSemanal[dia] && planoSemanal[dia][ref]) || '';
-      inputReceita.value = (atual && atual !== '__NAO__') ? atual : '';
+      inputReceita.value = (atual && atual !== NAO) ? atual : '';
       modal.classList.add('active');
       inputReceita.focus();
       inputReceita.select();
     }
 
     function fecharModal(){ modal.classList.remove('active'); editingDia = null; editingRefeicao = null; }
+
+    // ESC + focus trap dentro do modal
+    modal.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); fecharModal(); return; }
+      if (e.key !== 'Tab') return;
+      const focusables = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      if (!focusables.length) return;
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+      else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+    });
 
     btnSalvar.onclick = () => {
       if(!editingDia || !editingRefeicao) return;
@@ -407,23 +336,81 @@
     btnNaoCozinhar.onclick = () => {
       if(!editingDia || !editingRefeicao) return;
       if(!planoSemanal[editingDia]) planoSemanal[editingDia] = {};
-      planoSemanal[editingDia][editingRefeicao] = '__NAO__';
+      planoSemanal[editingDia][editingRefeicao] = NAO;
       gravarPlano(planoSemanal);
       fecharModal(); atualizarCalendario();
     };
     modal.onclick = (e) => { if(e.target === modal) fecharModal(); };
 
-    // navegação
+    // ------- Atribuição automática -------
+    function applyRulesToCandidates(candidatas, tipoKey, date, rules){
+      if(!Array.isArray(candidatas) || !candidatas.length) return [];
+      const {isVerao, isInverno} = isSummerWinter(date);
+      const dow = date.getDay();
+      const meals = (rules.meals || {});
+      const mealRule = meals[tipoKey] || {};
+      const preferWords = splitComma(mealRule.prefer);
+      const season = rules.season || {};
+      const sazVerao   = isVerao   ? splitComma(season.verao)   : [];
+      const sazInverno = isInverno ? splitComma(season.inverno) : [];
+      const meatless = rules.meatless || {days:[], allowFish:true};
+      const isMeatlessDay = Array.isArray(meatless.days) && meatless.days.includes(dow);
+      const meatWords = ['carne','bife','vaca','porco','frango','peru','enchido','salsicha','presunto','fiambre'];
+      const fishWords = ['peixe','atum','bacalhau','salmão','pescada','sardinha','dourada','robalo','marisco','camarão'];
+      const extraLightForDinner = (tipoKey==='jantar' && mealRule.light) ? ['sopa','salada','peixe','grelhado','legumes'] : [];
+      let out = candidatas.filter(r => {
+        if(!isMeatlessDay) return true;
+        if(meatless.allowFish){
+          const isMeat = recipeMatches(r, meatWords);
+          const isFish = recipeMatches(r, fishWords);
+          return !isMeat || isFish;
+        }
+        return !recipeMatches(r, meatWords) && !recipeMatches(r, fishWords);
+      });
+      out = Array.from(new Map(out.map(r => [r.titulo.toLowerCase(), r])).values());
+      const priorityWords = [...preferWords, ...extraLightForDinner, ...sazVerao, ...sazInverno];
+      if(priorityWords.length){
+        const preferidas = out.filter(r => recipeMatches(r, priorityWords));
+        if(preferidas.length) out = preferidas;
+      }
+      return out;
+    }
+
+    function usedRecentlyTitles(days){
+      if(!days) return new Set();
+      const plano = lerPlano();
+      const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-days);
+      const set = new Set();
+      Object.entries(plano).forEach(([iso,obj])=>{
+        const d = new Date(iso);
+        if(d >= cutoff){ Object.values(obj||{}).forEach(nome => { if(nome && nome !== NAO) set.add(nome); }); }
+      });
+      return set;
+    }
+    function inferGroup(rec){
+      const t = ((rec.titulo||'') + ' ' + (rec.tags||[]).join(' ')).toLowerCase();
+      if(/massa|massada|esparguete|espaguete|penne|macarr|gnoc|tagliat/i.test(t)) return 'massa';
+      if(/peixe|atum|bacalhau|salm[aã]o|pescad|dourada|robalo|sardinh|marisc|camar/i.test(t)) return 'peixe';
+      if(/carne|bife|vaca|porco|frango|peru|entrecote|picanha|almondeg|salsich/i.test(t)) return 'carne';
+      if(/sopa|caldo|creme/i.test(t)) return 'sopa';
+      if(/salada|salad bowl|gaspacho/i.test(t)) return 'salada';
+      return 'outros';
+    }
+
     document.getElementById('prevWeek').onclick = () => { dataAtual.setDate(dataAtual.getDate()-7); atualizarCalendario(); };
     document.getElementById('nextWeek').onclick = () => { dataAtual.setDate(dataAtual.getDate()+7); atualizarCalendario(); };
 
-    // Completar com regras + rotação + limites
     document.getElementById('btnCompletar').onclick = () => {
       const start = getWeekStart(dataAtual);
       const livro  = lerLivroReceitas();
+      if (!livro.length){
+        if (confirm('Ainda não tens receitas guardadas. Queres ir à página "Receitas" para adicionar?')){
+          location.href = 'receitas.html';
+        }
+        return;
+      }
       const rules  = loadRules();
 
-      // helpers para limites
       function weekCounters(){
         const counters = {massa:0, peixe:0, carne:0, sopa:0, salada:0, outros:0};
         const order = daysOrder();
@@ -431,7 +418,7 @@
           const d = new Date(start);
           const delta = (dow - start.getDay() + 7) % 7;
           d.setDate(start.getDate()+delta);
-          const key = d.toISOString().slice(0,10);
+          const key = ymdLocal(d);
           const obj = planoSemanal[key] || {};
           Object.values(obj).forEach(nome=>{
             const r = livro.find(x=>x.titulo===nome);
@@ -451,27 +438,24 @@
         const dia = new Date(start);
         const delta = (dow - start.getDay() + 7) % 7;
         dia.setDate(start.getDate()+delta);
-        const diaKey = dia.toISOString().slice(0,10);
+        const diaKey = ymdLocal(dia);
         if(!planoSemanal[diaKey]) planoSemanal[diaKey] = {};
 
         for (let ref of refeicoes) {
           const atual = planoSemanal[diaKey][ref];
-          if (atual && atual.trim() !== '') continue; // só preenche vazios
+          if (atual && atual.trim() !== '') continue;
 
           const tipoKey = tipoKeyFromLabel(ref);
           let candidatas = livro.filter(r => r.tipo === tipoKey);
           candidatas = applyRulesToCandidates(candidatas, tipoKey, dia, rules);
 
-          // aplica rotação e limites
-          let poolBase = candidatas.length ? candidatas : receitasExemplo.filter(r => r.tipo === tipoKey);
+          let poolBase = candidatas.length ? candidatas : livro.filter(r => r.tipo === tipoKey);
+          if(!poolBase.length) continue;
 
-          // counters atualizados a cada slot
           const counters = weekCounters();
 
-          // 1) remove as usadas recentemente
           let pool = poolBase.filter(r => !recent.has(r.titulo));
 
-          // 2) prioriza grupos com mínimos por cumprir
           const groupsNeedingMin = Object.entries(limits)
             .filter(([g,v]) => (v.min||0) > (counters[g]||0))
             .map(([g])=>g);
@@ -480,14 +464,12 @@
             if(prefer.length) pool = prefer;
           }
 
-          // 3) bloqueia grupos que atingiram o máximo
           pool = pool.filter(r => {
             const g = inferGroup(r);
             const cap = (limits[g]?.max ?? Infinity);
             return (counters[g]||0) < cap;
           });
 
-          // fallback
           if(!pool.length) pool = poolBase;
 
           const escolhida = pool[Math.floor(Math.random()*pool.length)].titulo;
@@ -499,13 +481,20 @@
       atualizarCalendario();
     };
 
-    // Exportar PDF
     document.getElementById('btnExportar').onclick = () => window.print();
 
-    // Gerar lista de compras (sem categorias; agrega “Outros”)
-    document.getElementById('btnGerarCompras').onclick = () => {
-      const livro  = lerLivroReceitas();
-      const byName = Object.fromEntries(livro.map(r => [r.titulo, r]));
+    document.getElementById('btnGerarCompras').onclick = async () => {
+      const livro = lerLivroReceitas();
+      if (!livro.length) {
+        if (confirm('Ainda não tens receitas guardadas. Queres ir à página "Receitas" para adicionar?')) {
+          location.href = 'receitas.html';
+        }
+        return;
+      }
+
+      const byName = Object.fromEntries(
+        livro.map(r => [String(r.titulo || '').trim().toLowerCase(), r])
+      );
       const lista  = lerLista();
       if (!lista['Outros']) lista['Outros'] = [];
 
@@ -516,11 +505,12 @@
         .replace(/[.,;:]\s*$/,'')
         .trim();
 
-      // remove itens antigos de origem "plano"
       Object.keys(lista).forEach(cat => {
-        lista[cat] = (lista[cat] || []).filter(i => (i.src || 'manual') !== 'plano');
+        lista[cat] = (lista[cat] || []).filter(i => (i.src || 'plano') !== 'plano');
         if (!lista[cat].length && cat !== 'Outros') delete lista[cat];
       });
+
+      let added = 0;
 
       const start = getWeekStart(dataAtual);
       const order = daysOrder();
@@ -529,13 +519,14 @@
         const d = new Date(start);
         const delta = (dow - start.getDay() + 7) % 7;
         d.setDate(start.getDate() + delta);
-        const diaKey = d.toISOString().slice(0, 10);
+        const diaKey = ymdLocal(d);
         const obj    = planoSemanal[diaKey] || {};
 
         for (const ref of refeicoes) {
-          const nome = obj[ref];
-          if (!nome || nome === '__NAO__') continue;
+          const nomeRaw = obj[ref];
+          if (!nomeRaw || nomeRaw === NAO) continue;
 
+          const nome = String(nomeRaw).trim().toLowerCase();
           const rec = byName[nome];
           if (!rec || !rec.ingredientes) continue;
 
@@ -547,22 +538,77 @@
               const key = norm(raw);
               if (!key) return;
               const cat = 'Outros';
-              const ix = lista[cat].findIndex(i => (i.src || 'manual') === 'plano' && i.key === key);
+              const ix = (lista[cat] || []).findIndex(i => (i.src || 'plano') === 'plano' && i.key === key);
               if (ix === -1) {
                 const display = raw.replace(/^[\-\–•\*]\s*/,'').trim();
-                lista[cat].push({ nome: display, key, quantidade: '', comprado: false, src: 'plano' });
+                (lista[cat] ||= []).push({ nome: display, key, quantidade: '', comprado: false, src: 'plano' });
+                added++;
               }
             });
         }
       }
 
+      if (added === 0) {
+        alert('Não encontrei ingredientes para adicionar a partir do plano desta semana. Garante que tens receitas no plano e que a secção "Ingredientes" está preenchida.');
+        return;
+      }
+
       gravarLista(lista);
+
+      try{
+        const arrFS = Object.values(lista).flat().map(i => ({
+          nome: i.nome || '',
+          quantidade: i.quantidade || '',
+          comprado: !!i.comprado,
+          src: 'plano',
+          key: i.key ?? null
+        }));
+        if (window._saveShoppingListFS) {
+          await window._saveShoppingListFS(arrFS);
+        }
+      }catch(e){
+        console.warn('Falha ao sincronizar a lista com o Firestore:', e);
+      }
+
       if (confirm('Lista de compras gerada a partir do plano desta semana. Queres abrir a Lista de Compras agora?')) {
         location.href = 'listaCompras.html';
       }
     };
 
-    atualizarCalendario();
+    window.addEventListener('cal-start', atualizarCalendario);
+  </script>
+
+  <!-- === GUARD DE AUTENTICAÇÃO (CARREGA LIVRO E EXPOE HELPER DE LISTA) === -->
+  <script type="module">
+    import { auth, getAllRecipes, setShoppingList } from './firebase.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
+    const page = document.getElementById('page');
+    page.hidden = true;
+
+    onAuthStateChanged(auth, async (u) => {
+      if (!u) { location.href = 'index.html'; return; }
+
+      try{
+        const livro = await getAllRecipes(u.uid);
+        window._livroFS = Array.isArray(livro) ? livro : [];
+        localStorage.setItem('mealmaster_receitas', JSON.stringify(window._livroFS));
+      }catch(e){
+        console.warn('Falha a carregar receitas do Firestore:', e);
+        window._livroFS = [];
+      }
+
+      window._saveShoppingListFS = async (itemsArray) => {
+        try{
+          await setShoppingList(u.uid, Array.isArray(itemsArray) ? itemsArray : []);
+        }catch(err){
+          console.warn('Erro a gravar lista no Firestore:', err);
+        }
+      };
+
+      page.hidden = false;
+      window.dispatchEvent(new Event('cal-start'));
+    });
   </script>
 </body>
 </html>
